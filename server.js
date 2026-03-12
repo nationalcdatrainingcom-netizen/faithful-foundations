@@ -6,6 +6,7 @@ const { pool, initDb } = require('./db');
 
 const app = express();
 
+app.set('trust proxy', 1); // Required for Render's HTTPS proxy
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -16,8 +17,8 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    secure: process.env.NODE_ENV === 'production',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    secure: 'auto',
     sameSite: 'lax'
   }
 }));
