@@ -119,7 +119,7 @@ Generate the COMPLETE Daily Learning Experience. Every section. Every word. Full
         'x-api-key': process.env.ANTHROPIC_API_KEY
       },
       body: JSON.stringify({
-        model: 'claude-opus-4-5',
+        model: 'claude-sonnet-4-5',
         max_tokens: 8000,
         system: FF_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: userMessage }]
@@ -148,7 +148,7 @@ Generate the COMPLETE Daily Learning Experience. Every section. Every word. Full
       focus, fruit_of_spirit, vocabulary_word, lets_think,
       required_book ? JSON.stringify(required_book) : null,
       content, 'draft',
-      JSON.stringify({ model: 'claude-opus-4-5', focus, fruit_of_spirit, age_band }),
+      JSON.stringify({ model: 'claude-sonnet-4-5', focus, fruit_of_spirit, age_band }),
       continuity_context || null
     ]);
 
