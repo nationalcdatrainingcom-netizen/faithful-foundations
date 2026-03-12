@@ -267,12 +267,23 @@ async function runBatchJob(jobId, explorationId, ageBand, dayList, scopeSequence
     while (attempts < maxAttempts) {
       attempts++;
       try {
-        content = await generateLessonContent(Object.assign({}, dayData, {
-          exploration_id: explorationId,
-          exploration_title: explorationTitle || 'Exploring Trees',
-          age_band: ageBand,
-          revision_notes: attempts > 1 && reviewResult ? reviewResult.revision_notes : null
-        }));
+content = await generateLessonContent({
+  day_number: dayData.day,
+  week_number: dayData.week,
+  day_type: dayData.type,
+  focus: dayData.focus,
+  vocab: dayData.vocab,
+  vocabulary_word: dayData.vocab,
+  lets_think: dayData.letsThink,
+  continuity_context: dayData.continuity,
+  required_book: dayData.book,
+  fruit_of_spirit: dayData.fruit_of_spirit || (scopeSequence && scopeSequence.fruits ? scopeSequence.fruits[dayData.week] : ''),
+  weekly_question: dayData.weekly_question || '',
+  exploration_id: explorationId,
+  exploration_title: explorationTitle || 'Exploring Trees',
+  age_band: ageBand,
+  revision_notes: attempts > 1 && reviewResult ? reviewResult.revision_notes : null
+});
 
         if (!content) throw new Error('Empty content from generator');
 
