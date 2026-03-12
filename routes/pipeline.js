@@ -104,7 +104,7 @@ async function reviewLesson(content, dayInfo) {
       'x-api-key': process.env.ANTHROPIC_API_KEY
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-5',
+      model: 'claude-sonnet-4-5-20250514',
       max_tokens: 2000,
       system: REVIEWER_SYSTEM_PROMPT,
       messages: [{
@@ -203,7 +203,7 @@ Generate the COMPLETE Daily Learning Experience. Every section. Every word. Full
       'x-api-key': process.env.ANTHROPIC_API_KEY
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-5',
+      model: 'claude-sonnet-4-5-20250514',
       max_tokens: 8000,
       system: FF_SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userMessage }]
