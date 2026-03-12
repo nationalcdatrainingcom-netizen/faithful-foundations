@@ -17,8 +17,7 @@
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
 
 /* ---- SCREEN MANAGER ---- */
-.screen{display:none;min-height:100vh;}
-.screen.active{display:block;}
+.screen{display:none;min-height:100vh;}.screen.active{display:block;}
 
 /* ---- LOGIN ---- */
 #loginScreen{display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--dark) 0%,#2D6A4F 100%);}
@@ -333,6 +332,7 @@ const SCHOOL_YEAR_MONTHS = [9,10,11,12,1,2,3,4,5,6,7,8]; // Sep-Aug
 
 // ========== INIT ==========
 async function init() {
+  document.getElementById('loginScreen').classList.add('active');
   const r = await api('/api/auth/me');
   if (r.user) {
     currentUser = r.user;
