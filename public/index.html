@@ -364,8 +364,10 @@ async function doLogout() {
 }
 
 function enterApp() {
-  document.getElementById('loginScreen').classList.remove('active');
-  document.getElementById('appScreen').classList.add('active');
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appScreen').style.display = 'flex';
+  document.getElementById('appScreen').style.flexDirection = 'column';
+  document.getElementById('appScreen').style.minHeight = '100vh';
   document.getElementById('headerName').textContent = currentUser.full_name;
   document.getElementById('headerRole').textContent = formatRole(currentUser.role);
   // Hide director-only tabs for teachers
@@ -1011,12 +1013,30 @@ function showToast(msg, type='') {
   setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-document.addEventListener("DOMContentLoaded", function() {
-  document.getElementById('modalOverlay').addEventListener('click', e => {
-    if (e.target===document.getElementById('modalOverlay')) closeModal();
+// Wait for DOM then start everything
+window.onload = function() {
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginScreen').style.minHeight = '100vh';
+  
+  document.getElementById('modalOverlay').addEventListener('click', function(e) {
+    if (e.target === document.getElementById('modalOverlay')) closeModal();
   });
-  init();
-});
+
+  document.getElementById('loginPin').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') doLogin();
+  });
+
+  // Check if already logged in
+  fetch('/api/auth/me')
+    .then(r => r.json())
+    .then(data => {
+      if (data.user) {
+        currentUser = data.user;
+        enterApp();
+      }
+    })
+    .catch(err => console.error('Auth check failed:', err));
+};
 </script>
 </body>
 </html>
