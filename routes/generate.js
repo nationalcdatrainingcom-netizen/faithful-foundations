@@ -36,7 +36,7 @@ GENERATE ALL 10 SECTIONS COMPLETELY — no placeholders, no abbreviations:
 2. DISCOVERY CIRCLE:
 - Opening Fruitful Moment: name + complete chant/song/game text + numbered steps + exact teacher language
 - Let's Think review: exact teacher language
-- Heart Moment: exact 3-5 sentence script + wonder question + scripture ≤10 words paraphrased
+- Heart Moment: exact 3-5 sentence script + wonder question + scripture 10 words or fewer paraphrased
 - Main activity: named title + 6-8 numbered steps with exact quoted language + bold vocabulary + partner talk + prior learning connection + Choice Time setup
 - Transition Fruitful Moment: complete script
 
@@ -70,45 +70,28 @@ router.post('/lesson', requireAdmin, async (req, res) => {
     previous_days_summary, anchor_materials
   } = req.body;
 
-  // Build age-appropriate context
   const ageBandDescriptions = {
-    'infant_toddler': 'Infant/Toddler (0–18 months) — nonmobile to early walkers, preverbal to first words, learning through sensory experience, caregiver relationship is everything',
-    'older_toddler': 'Older Toddler (18–30 months) — active movers, emerging language, parallel play, 2–5 minute attention spans, routine is security',
-    'preschool': 'Preschool (2½–4 years) — curious investigators, expanding vocabulary, beginning cooperative play, 10–15 minute group times',
-    'prek': 'Pre-K (4–5 years) — kindergarten preparation, longer attention, emerging literacy and math, complex play, peer relationships central'
+    'infant_toddler': 'Infant/Toddler (0-18 months) — nonmobile to early walkers, preverbal to first words, learning through sensory experience, caregiver relationship is everything',
+    'older_toddler': 'Older Toddler (18-30 months) — active movers, emerging language, parallel play, 2-5 minute attention spans, routine is security',
+    'preschool': 'Preschool (2.5-4 years) — curious investigators, expanding vocabulary, beginning cooperative play, 10-15 minute group times',
+    'prek': 'Pre-K (4-5 years) — kindergarten preparation, longer attention, emerging literacy and math, complex play, peer relationships central'
   };
 
-  const userMessage = `Generate a complete Daily Learning Experience for:
-
-EXPLORATION: ${exploration_title}
-WEEKLY QUESTION: ${weekly_question}
-DAY: ${day_number} of 25 (Week ${week_number}, ${day_type})
-TODAY'S FOCUS: ${focus}
-FRUIT OF THE SPIRIT THIS WEEK: ${fruit_of_spirit}
-AGE BAND: ${ageBandDescriptions[age_band] || age_band}
-VOCABULARY WORD: ${vocabulary_word}
-LET'S THINK: ${lets_think}
-REQUIRED BOOK: ${required_book ? JSON.stringify(required_book) : 'Teacher selects appropriate book'}
-
-CONTINUITY CONTEXT — what has happened before today:
-${continuity_context || 'This is the first day of the exploration.'}
-
-PREVIOUS DAYS SUMMARY:
-${previous_days_summary || 'N/A'}
-
-ANCHOR MATERIALS IN USE:
-${anchor_materials || 'How to Describe a Tree chart, Class Tree Journal, Wonder Wall, Tree Parts poster'}
-
-${day_type === 'introduction' ? `
-SPECIAL INSTRUCTION — THIS IS DAY 1 (INTRODUCTION DAY):
-- Include a complete tour of all newly set-up learning areas
-- Introduce the exploration topic with wonder and excitement
-- Introduce the Class Tree Journal and Wonder Wall
-- Use language that welcomes children into something new and exciting
-- The Heart Moment should establish this exploration as a gift from God to discover
-` : ''}
-
-Generate the COMPLETE Daily Learning Experience. Every section. Every word. Full teaching sequences for all 4 stages. Do not skip or abbreviate anything.`;
+  const userMessage = 'Generate a complete Daily Learning Experience for:\n\n' +
+    'EXPLORATION: ' + exploration_title + '\n' +
+    'WEEKLY QUESTION: ' + weekly_question + '\n' +
+    'DAY: ' + day_number + ' of 25 (Week ' + week_number + ', ' + day_type + ')\n' +
+    'TODAY\'S FOCUS: ' + focus + '\n' +
+    'FRUIT OF THE SPIRIT THIS WEEK: ' + fruit_of_spirit + '\n' +
+    'AGE BAND: ' + (ageBandDescriptions[age_band] || age_band) + '\n' +
+    'VOCABULARY WORD: ' + vocabulary_word + '\n' +
+    'LET\'S THINK: ' + lets_think + '\n' +
+    'REQUIRED BOOK: ' + (required_book ? JSON.stringify(required_book) : 'Teacher selects appropriate book') + '\n\n' +
+    'CONTINUITY CONTEXT — what has happened before today:\n' + (continuity_context || 'This is the first day of the exploration.') + '\n\n' +
+    'PREVIOUS DAYS SUMMARY:\n' + (previous_days_summary || 'N/A') + '\n\n' +
+    'ANCHOR MATERIALS IN USE:\n' + (anchor_materials || 'How to Describe a Tree chart, Class Tree Journal, Wonder Wall, Tree Parts poster') + '\n\n' +
+    (day_type === 'introduction' ? 'SPECIAL INSTRUCTION — THIS IS DAY 1 (INTRODUCTION DAY):\n- Include a complete tour of all newly set-up learning areas\n- Introduce the exploration topic with wonder and excitement\n- Introduce the Class Tree Journal and Wonder Wall\n- Use language that welcomes children into something new and exciting\n- The Heart Moment should establish this exploration as a gift from God to discover\n\n' : '') +
+    'Generate the COMPLETE Daily Learning Experience. Every section. Every word. Full teaching sequences for all 4 stages. Do not skip or abbreviate anything.';
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -119,7 +102,7 @@ Generate the COMPLETE Daily Learning Experience. Every section. Every word. Full
         'x-api-key': process.env.ANTHROPIC_API_KEY
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
+        model: 'claude-sonnet-4-5-20250929',
         max_tokens: 8000,
         system: FF_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: userMessage }]
@@ -127,30 +110,22 @@ Generate the COMPLETE Daily Learning Experience. Every section. Every word. Full
     });
 
     const data = await response.json();
-    if (!data.content?.[0]?.text) {
+    if (!data.content || !data.content[0] || !data.content[0].text) {
       return res.status(500).json({ error: 'AI generation failed', details: data });
     }
 
     const content = data.content[0].text;
 
-    // Save to database
     const lessonId = uuidv4();
-    await pool.query(`
-      INSERT INTO daily_lessons 
-        (id, exploration_id, day_number, week_number, day_type, age_band, focus, 
-         fruit_of_spirit, vocabulary_word, lets_think, required_book, content, 
-         status, generation_prompt, continuity_notes)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
-      ON CONFLICT (exploration_id, day_number, age_band) 
-      DO UPDATE SET content = $12, status = 'draft', generation_prompt = $14
-    `, [
-      lessonId, exploration_id, day_number, week_number, day_type, age_band,
-      focus, fruit_of_spirit, vocabulary_word, lets_think,
-      required_book ? JSON.stringify(required_book) : null,
-      content, 'draft',
-      JSON.stringify({ model: 'claude-sonnet-4-5', focus, fruit_of_spirit, age_band }),
-      continuity_context || null
-    ]);
+    await pool.query(
+      'INSERT INTO daily_lessons (id, exploration_id, day_number, week_number, day_type, age_band, focus, fruit_of_spirit, vocabulary_word, lets_think, required_book, content, status, generation_prompt, continuity_notes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) ON CONFLICT (exploration_id, day_number, age_band) DO UPDATE SET content = $12, status = \'draft\', generation_prompt = $14',
+      [lessonId, exploration_id, day_number, week_number, day_type, age_band,
+       focus, fruit_of_spirit, vocabulary_word, lets_think,
+       required_book ? JSON.stringify(required_book) : null,
+       content, 'draft',
+       JSON.stringify({ model: 'claude-sonnet-4-5-20250929', focus, fruit_of_spirit, age_band }),
+       continuity_context || null]
+    );
 
     res.json({ success: true, lesson_id: lessonId, content });
   } catch (err) {
