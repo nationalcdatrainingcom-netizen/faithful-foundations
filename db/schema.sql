@@ -114,7 +114,7 @@ CREATE TABLE IF NOT EXISTS explorations (
 -- Insert Trees exploration
 INSERT INTO explorations (id, title, topic, overarching_question, suggested_month, status, sort_order)
 VALUES (
-  'exp-trees-0001-0000-0000-000000000001',
+  'eeeeeeee-eeee-eeee-eeee-000000000001',
   'Exploring Trees',
   'trees',
   'What are trees? How do trees grow, change, and help the world around them?',
