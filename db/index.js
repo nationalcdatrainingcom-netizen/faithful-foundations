@@ -675,7 +675,7 @@ async function approveGeneratedLesson(id) {
   const data = await res.json();
   const actionsEl = document.getElementById('postGenActions');
   if (actionsEl) {
-    actionsEl.innerHTML = '<span style="color:var(--gold);font-weight:bold;">✓ Approved</span> &nbsp; <button class="btn btn-green btn-sm" onclick="publishGeneratedLesson('' + id + '')">🌐 Publish — Make Visible to Teachers</button> &nbsp; <button class="btn btn-outline btn-sm" onclick="window.print()">🖨️ Print</button>';
+    actionsEl.innerHTML = '<span style="color:var(--gold);font-weight:bold;">&#10003; Approved</span> &nbsp; <button class="btn btn-green btn-sm" onclick="publishGeneratedLesson(\'' + id + '\')">Publish &mdash; Make Visible to Teachers</button> &nbsp; <button class="btn btn-outline btn-sm" onclick="window.print()">Print</button>';
   }
   showToast('Approved! Now click Publish to make it visible to teachers.');
   loadContentStatus();
@@ -839,7 +839,7 @@ function loadBatchPanel() {
         <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:6px;" id="dayCheckboxes">
           ${Array.from({length:25},(_,i)=>{
             const d = TREES_SCOPE.days.find(x=>x.day===i+1);
-            return '<label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;background:white;padding:6px;border-radius:4px;border:1px solid var(--border);"><input type="checkbox" name="batchDay" value="'+(i+1)+'" checked> Day '+(i+1)+(d?' <span style='font-size:10px;color:var(--text-light);'>(Wk'+d.week+')</span>':'')+' </label>';
+            return '<label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;background:white;padding:6px;border-radius:4px;border:1px solid var(--border);"><input type="checkbox" name="batchDay" value="'+(i+1)+'" checked> Day '+(i+1)+(d?' <small>(Wk'+d.week+')</small>':'')+' </label>';
           }).join('')}
         </div>
         <div style="display:flex; gap:8px; margin-top:8px;">
@@ -973,7 +973,7 @@ async function loadBatchHistory() {
         '<td style="padding:8px;text-align:center;">' + job.total + '</td>' +
         '<td style="padding:8px;text-align:center;color:var(--green);">' + job.approved + '</td>' +
         '<td style="padding:8px;text-align:center;color:var(--gold);">' + job.flagged + '</td>' +
-        '<td style="padding:8px;"><button class="btn btn-sm btn-outline" onclick="pollBatchJob('' + job.id + '')">View</button></td>' +
+        '<td style="padding:8px;"><button class="btn btn-sm btn-outline" onclick="pollBatchJob(\'' + job.id + '\')">View</button></td>' +
       '</tr>').join('') +
       '</tbody></table></div>';
   } catch(e) {}
