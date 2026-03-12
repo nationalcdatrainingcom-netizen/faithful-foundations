@@ -237,8 +237,13 @@
         <div class="card">
           <h2>Content Creation Studio</h2>
           <p class="card-subtitle">Generate, review, and approve Daily Learning Experiences for Faithful Foundations</p>
+          <div style="display:flex; gap:10px; margin-top:12px;">
+            <button class="btn btn-outline" onclick="showCreateTab('single')" id="tabSingle">Single Lesson</button>
+            <button class="btn btn-green" onclick="showCreateTab('batch')" id="tabBatch">Batch Generate (Set & Rest)</button>
+          </div>
         </div>
         <div id="createContent"></div>
+        <div id="batchContent" style="display:none"></div>
       </div>
     </main>
   </div>
@@ -531,6 +536,17 @@ function toggleNotes() {
 }
 
 // ============================================================
+// CREATE TAB SWITCHER
+// ============================================================
+function showCreateTab(tab) {
+  document.getElementById('createContent').style.display = tab === 'single' ? 'block' : 'none';
+  document.getElementById('batchContent').style.display = tab === 'batch' ? 'block' : 'none';
+  document.getElementById('tabSingle').className = tab === 'single' ? 'btn btn-green' : 'btn btn-outline';
+  document.getElementById('tabBatch').className = tab === 'batch' ? 'btn btn-green' : 'btn btn-outline';
+  if (tab === 'batch') loadBatchPanel();
+}
+
+// ============================================================
 // SCOPE & SEQUENCE DATA (all 25 days pre-loaded)
 // ============================================================
 const TREES_SCOPE = {
@@ -635,12 +651,13 @@ async function generateLesson() {
       output.innerHTML = `
         <div class="card" style="border-left:4px solid var(--green);">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-            <h3 style="color:var(--green);">✅ Generated Successfully — Saved as Draft</h3>
-            <div style="display:flex; gap:8px;">
+            <h3 style="color:var(--green);">✅ Generated — Saved as Draft</h3>
+            <div id="postGenActions" style="display:flex; gap:8px; align-items:center;">
               <button class="btn btn-gold btn-sm" onclick="approveGeneratedLesson('${data.lesson_id}')">✓ Approve</button>
               <button class="btn btn-outline btn-sm" onclick="window.print()">🖨️ Print</button>
             </div>
           </div>
+          <p style="font-size:13px; color:var(--text-light); margin-bottom:16px;">Step 1: Read the lesson below. Step 2: Click Approve. Step 3: Click Publish to make it visible to teachers.</p>
           <div style="background:var(--cream); border-radius:8px; padding:24px; font-size:14px; line-height:1.8; white-space:pre-wrap; max-height:600px; overflow-y:auto;">${data.content}</div>
         </div>`;
       loadContentStatus();
@@ -654,8 +671,25 @@ async function generateLesson() {
 }
 
 async function approveGeneratedLesson(id) {
-  await fetch(`/api/lessons/${id}/approve`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({}) });
-  showToast('✓ Lesson approved!');
+  const res = await fetch('/api/lessons/' + id + '/approve', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({}) });
+  const data = await res.json();
+  const actionsEl = document.getElementById('postGenActions');
+  if (actionsEl) {
+    actionsEl.innerHTML = '<span style="color:var(--gold);font-weight:bold;">&#10003; Approved</span> &nbsp; <button class="btn btn-green btn-sm" onclick="publishGeneratedLesson(\'' + id + '\')">Publish &mdash; Make Visible to Teachers</button> &nbsp; <button class="btn btn-outline btn-sm" onclick="window.print()">Print</button>';
+  }
+  showToast('Approved! Now click Publish to make it visible to teachers.');
+  loadContentStatus();
+}
+
+async function publishGeneratedLesson(id) {
+  const res = await fetch('/api/lessons/' + id + '/publish', { method:'POST' });
+  const data = await res.json();
+  const actionsEl = document.getElementById('postGenActions');
+  if (actionsEl) {
+    actionsEl.innerHTML = '<span style="color:var(--green);font-weight:bold;">🌐 Published — teachers can now see this lesson</span> &nbsp; <button class="btn btn-outline btn-sm" onclick="window.print()">🖨️ Print</button>';
+  }
+  showToast('Published! This lesson is now live for teachers.');
+  loadContentStatus();
 }
 
 async function loadContentStatus() {
@@ -766,6 +800,185 @@ window.onload = function() {
     })
     .catch(() => { document.getElementById('loginScreen').style.display = 'flex'; });
 };
+
+// ============================================================
+// BATCH GENERATION PANEL
+// ============================================================
+let batchPollInterval = null;
+
+function loadBatchPanel() {
+  const el = document.getElementById('batchContent');
+  const treeExp = explorations.find(e => e.topic === 'trees');
+
+  el.innerHTML = `
+    <div style="background:var(--gold-light); border:2px solid var(--gold); border-radius:10px; padding:24px; margin-bottom:20px;">
+      <h3 style="color:var(--brown); margin-bottom:8px;">Set & Rest — Overnight Batch Generator</h3>
+      <p style="font-size:13px; color:var(--brown); margin-bottom:20px;">
+        Configure your batch below, click Run, and let the AI generate and review every lesson automatically.
+        Each lesson is reviewed against a 100-point checklist. Perfect scores are auto-approved.
+        Anything less is saved as a draft flagged for your review. You wake up to lessons ready.
+      </p>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+        <div class="form-group">
+          <label>Exploration</label>
+          <select id="batchExpId">
+            ${explorations.map(e => '<option value="' + e.id + '">' + e.title + '</option>').join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Age Band</label>
+          <select id="batchAgeBand">
+            ${AGE_BANDS.map(a => '<option value="' + a.id + '">' + a.label + ' (' + a.sublabel + ')</option>').join('')}
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <label style="font-size:12px; font-family:Arial,sans-serif; color:var(--text-light); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;">Days to Generate</label>
+        <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:6px;" id="dayCheckboxes">
+          ${Array.from({length:25},(_,i)=>{
+            const d = TREES_SCOPE.days.find(x=>x.day===i+1);
+            return '<label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;background:white;padding:6px;border-radius:4px;border:1px solid var(--border);"><input type="checkbox" name="batchDay" value="'+(i+1)+'" checked> Day '+(i+1)+(d?' <small>(Wk'+d.week+')</small>':'')+' </label>';
+          }).join('')}
+        </div>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button class="btn btn-sm btn-outline" onclick="selectDays('all')">Select All</button>
+          <button class="btn btn-sm btn-outline" onclick="selectDays('core')">Core Only (1-20)</button>
+          <button class="btn btn-sm btn-outline" onclick="selectDays('week1')">Week 1 Only</button>
+          <button class="btn btn-sm btn-outline" onclick="selectDays('none')">Clear All</button>
+        </div>
+      </div>
+
+      <div style="background:white;border-radius:8px;padding:16px;margin-bottom:16px;font-size:13px;">
+        <strong>What will happen:</strong><br>
+        Each lesson is generated → reviewed by AI against 100-point checklist → auto-approved if perfect → saved as draft flagged for Mary if not perfect (max 3 attempts per lesson). A 5-second pause between lessons protects against API rate limits.
+        <br><br>
+        <strong>Mealtime prayers</strong> rotate automatically through all 5 prayers across the 25 days.
+        <br><br>
+        <strong>Estimated time:</strong> <span id="timeEstimate">~20 lessons × ~2 min each = ~40 minutes</span>
+      </div>
+
+      <button class="btn btn-green" onclick="startBatch()" id="batchRunBtn" style="font-size:16px;padding:14px 32px;">Run Overnight Batch</button>
+    </div>
+
+    <div id="batchJobPanel"></div>
+    <div id="batchHistory"></div>`;
+
+  updateTimeEstimate();
+  loadBatchHistory();
+}
+
+function selectDays(mode) {
+  const checkboxes = document.querySelectorAll('input[name="batchDay"]');
+  checkboxes.forEach(cb => {
+    const val = parseInt(cb.value);
+    if (mode === 'all') cb.checked = true;
+    else if (mode === 'none') cb.checked = false;
+    else if (mode === 'core') cb.checked = val <= 20;
+    else if (mode === 'week1') cb.checked = val <= 5;
+  });
+  updateTimeEstimate();
+}
+
+function updateTimeEstimate() {
+  const checked = document.querySelectorAll('input[name="batchDay"]:checked').length;
+  const el = document.getElementById('timeEstimate');
+  if (el) el.textContent = '~' + checked + ' lessons × ~2 min each = ~' + Math.round(checked * 2) + ' minutes';
+}
+
+async function startBatch() {
+  const expId = document.getElementById('batchExpId').value;
+  const ageBand = document.getElementById('batchAgeBand').value;
+  const checked = Array.from(document.querySelectorAll('input[name="batchDay"]:checked')).map(cb => parseInt(cb.value));
+
+  if (checked.length === 0) { showToast('Please select at least one day', true); return; }
+
+  const btn = document.getElementById('batchRunBtn');
+  btn.disabled = true;
+  btn.textContent = 'Starting...';
+
+  const expTitle = explorations.find(e => e.id === expId)?.title || 'Exploring Trees';
+
+  const res = await fetch('/api/pipeline/batch', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      exploration_id: expId,
+      age_band: ageBand,
+      days: checked,
+      exploration_title: expTitle,
+      scope_sequence: TREES_SCOPE.days
+    })
+  });
+
+  const data = await res.json();
+  if (data.error) { showToast('Error: ' + data.error, true); btn.disabled = false; btn.textContent = 'Run Overnight Batch'; return; }
+
+  showToast('Batch started! ' + checked.length + ' lessons queued.');
+  btn.textContent = 'Batch Running...';
+  pollBatchJob(data.job_id);
+}
+
+function pollBatchJob(jobId) {
+  if (batchPollInterval) clearInterval(batchPollInterval);
+  batchPollInterval = setInterval(async () => {
+    const res = await fetch('/api/pipeline/batch/' + jobId);
+    const job = await res.json();
+    renderJobStatus(job);
+    if (job.status === 'complete') {
+      clearInterval(batchPollInterval);
+      const btn = document.getElementById('batchRunBtn');
+      if (btn) { btn.disabled = false; btn.textContent = 'Run Overnight Batch'; }
+      showToast('Batch complete! ' + job.approved + ' approved, ' + job.flagged + ' need review.');
+    }
+  }, 4000);
+}
+
+function renderJobStatus(job) {
+  const el = document.getElementById('batchJobPanel');
+  if (!el) return;
+  const pct = job.total > 0 ? Math.round(job.completed / job.total * 100) : 0;
+  el.innerHTML = '<div class="card" style="border-left:4px solid var(--green);">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">' +
+    '<h3 style="color:var(--green);">' + (job.status === 'complete' ? 'Batch Complete' : 'Batch Running...') + '</h3>' +
+    '<div style="font-size:13px;color:var(--text-light);">' + job.completed + '/' + job.total + ' lessons</div></div>' +
+    '<div class="progress-bar" style="height:12px;margin-bottom:12px;"><div class="progress-fill" style="width:' + pct + '%;"></div></div>' +
+    '<div style="display:flex;gap:20px;font-size:13px;margin-bottom:16px;">' +
+    '<span style="color:var(--green);">✓ Auto-approved: ' + job.approved + '</span>' +
+    '<span style="color:var(--gold);">⚑ Needs review: ' + job.flagged + '</span>' +
+    '<span style="color:var(--red);">✗ Failed: ' + job.failed + '</span></div>' +
+    '<div style="max-height:300px;overflow-y:auto;font-size:12px;font-family:Arial,sans-serif;">' +
+    job.log.map(entry => {
+      const color = entry.status === 'approved' ? 'var(--green)' : entry.status === 'flagged' ? 'var(--gold)' : entry.status === 'error' ? 'var(--red)' : 'var(--text-light)';
+      const icon = entry.status === 'approved' ? '✓' : entry.status === 'flagged' ? '⚑' : entry.status === 'generating' ? '⟳' : entry.status === 'retrying' ? '↻' : '✗';
+      return '<div style="padding:4px 0;border-bottom:1px solid #eee;color:' + color + ';">' + icon + ' Day ' + entry.day + ': ' + entry.note + '</div>';
+    }).join('') +
+    '</div></div>';
+}
+
+async function loadBatchHistory() {
+  const el = document.getElementById('batchHistory');
+  if (!el) return;
+  try {
+    const res = await fetch('/api/pipeline/batch');
+    const jobs = await res.json();
+    if (!jobs.length) return;
+    el.innerHTML = '<div class="card"><h3 style="color:var(--green);margin-bottom:12px;">Recent Batch Jobs</h3>' +
+      '<table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:var(--green-pale);">' +
+      '<th style="padding:8px;">Started</th><th style="padding:8px;">Status</th><th style="padding:8px;">Total</th><th style="padding:8px;">Approved</th><th style="padding:8px;">Flagged</th><th style="padding:8px;">Action</th></tr></thead><tbody>' +
+      jobs.slice(0,5).map(job => '<tr style="border-bottom:1px solid var(--border);">' +
+        '<td style="padding:8px;">' + new Date(job.started_at).toLocaleString() + '</td>' +
+        '<td style="padding:8px;">' + job.status + '</td>' +
+        '<td style="padding:8px;text-align:center;">' + job.total + '</td>' +
+        '<td style="padding:8px;text-align:center;color:var(--green);">' + job.approved + '</td>' +
+        '<td style="padding:8px;text-align:center;color:var(--gold);">' + job.flagged + '</td>' +
+        '<td style="padding:8px;"><button class="btn btn-sm btn-outline" onclick="pollBatchJob(\'' + job.id + '\')">View</button></td>' +
+      '</tr>').join('') +
+      '</tbody></table></div>';
+  } catch(e) {}
+}
+
 </script>
 </body>
 </html>
