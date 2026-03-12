@@ -114,12 +114,16 @@ async function reviewLesson(content, dayInfo) {
     })
   });
   const data = await response.json();
+  if (!response.ok || data.error) {
+    // API returned an error — return a failed review so the batch can continue
+    return { score: 0, passed: false, revision_notes: 'API error: ' + (data.error?.message || JSON.stringify(data)), missing_elements: ['API error'] };
+  }
   const text = data.content?.[0]?.text || '{}';
   try {
     const clean = text.replace(/```json|```/g, '').trim();
     return JSON.parse(clean);
   } catch (e) {
-    return { score: 0, passed: false, revision_notes: 'Reviewer could not parse the lesson.', missing_elements: ['Parse error'] };
+    return { score: 0, passed: false, revision_notes: 'Reviewer could not parse response.', missing_elements: ['Parse error'] };
   }
 }
 
@@ -395,6 +399,29 @@ async function runBatchJob(jobId, explorationId, ageBand, dayList, scopeSequence
   job.status = 'complete';
   job.completed_at = new Date().toISOString();
 }
+
+// DEBUG — test API connection
+router.get('/debug-api', requireAdmin, async (req, res) => {
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'anthropic-version': '2023-06-01',
+        'x-api-key': process.env.ANTHROPIC_API_KEY
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5-20250514',
+        max_tokens: 50,
+        messages: [{ role: 'user', content: 'Say hello in 5 words.' }]
+      })
+    });
+    const data = await response.json();
+    res.json({ http_status: response.status, ok: response.ok, api_key_set: !!process.env.ANTHROPIC_API_KEY, data });
+  } catch (err) {
+    res.json({ error: err.message });
+  }
+});
 
 module.exports = router;
 module.exports.MEALTIME_PRAYERS = MEALTIME_PRAYERS;
