@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const fetch = require('node-fetch');
-const { pool } = require('../server');
+const { pool } = require('../db');
 const { v4: uuidv4 } = require('uuid');
 
 function requireAdmin(req, res, next) {
