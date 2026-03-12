@@ -3,13 +3,10 @@ const express = require('express');
 const session = require('express-session');
 const pgSession = require('connect-pg-simple')(session);
 const path = require('path');
-const { Pool } = require('pg');
+const { pool } = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-// Database
-const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false });
 
 // Middleware
 app.use(express.json({ limit: '10mb' }));
@@ -56,5 +53,3 @@ async function initDB() {
 initDB().then(() => {
   app.listen(PORT, () => console.log(`Faithful Foundations running on port ${PORT}`));
 });
-
-module.exports = { pool };
