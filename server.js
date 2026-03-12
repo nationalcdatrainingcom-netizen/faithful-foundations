@@ -32,17 +32,11 @@ app.use('/api/lessons', require('./routes/lessons'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/generate', require('./routes/generate'));
 app.use('/api/pipeline', require('./routes/pipeline'));
-
 // Health check
 app.get('/api/test-pipeline', (req, res) => res.json({ pipeline_loaded: true, key_set: !!process.env.ANTHROPIC_API_KEY }));
-```
-
-Commit, wait for deploy, then visit:
-```
-https://tcc-curriculum-generator.onrender.com/api/test-pipeline
 app.get('/api/health', (req, res) => res.json({ status: 'ok', app: 'Faithful Foundations' }));
+// SPA fallb
 
-// SPA fallback
 app.get('/*path', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 // Init DB
