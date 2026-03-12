@@ -31,6 +31,7 @@ app.use('/api/explorations', require('./routes/explorations'));
 app.use('/api/lessons', require('./routes/lessons'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/generate', require('./routes/generate'));
+app.use('/api/pipeline', require('./routes/pipeline'));
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', app: 'Faithful Foundations' }));
