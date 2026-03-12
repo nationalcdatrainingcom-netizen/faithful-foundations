@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { pool } = require('../server');
+const { pool } = require('../db');
 
 // Get all explorations (published + coming soon) — for delivery site
 router.get('/', async (req, res) => {
