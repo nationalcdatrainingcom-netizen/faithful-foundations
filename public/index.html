@@ -1011,11 +1011,12 @@ function showToast(msg, type='') {
   setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-document.getElementById('modalOverlay').addEventListener('click', e => {
-  if (e.target===document.getElementById('modalOverlay')) closeModal();
+document.addEventListener("DOMContentLoaded", function() {
+  document.getElementById('modalOverlay').addEventListener('click', e => {
+    if (e.target===document.getElementById('modalOverlay')) closeModal();
+  });
+  init();
 });
-
-document.addEventListener("DOMContentLoaded", init);
 </script>
 </body>
 </html>
