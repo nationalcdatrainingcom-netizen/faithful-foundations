@@ -104,7 +104,7 @@ async function reviewLesson(content, dayInfo) {
       'x-api-key': process.env.ANTHROPIC_API_KEY
     },
     body: JSON.stringify({
-      model: 'claude-opus-4-5',
+      model: 'claude-sonnet-4-5',
       max_tokens: 2000,
       system: REVIEWER_SYSTEM_PROMPT,
       messages: [{
@@ -203,7 +203,7 @@ Generate the COMPLETE Daily Learning Experience. Every section. Every word. Full
       'x-api-key': process.env.ANTHROPIC_API_KEY
     },
     body: JSON.stringify({
-      model: 'claude-opus-4-5',
+      model: 'claude-sonnet-4-5',
       max_tokens: 8000,
       system: FF_SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userMessage }]
@@ -211,7 +211,13 @@ Generate the COMPLETE Daily Learning Experience. Every section. Every word. Full
   });
 
   const data = await response.json();
-  return data.content?.[0]?.text || null;
+  if (!response.ok || data.error) {
+    throw new Error('API error: ' + (data.error?.message || JSON.stringify(data.error) || 'Unknown error'));
+  }
+  if (!data.content?.[0]?.text) {
+    throw new Error('Empty response from API. Type: ' + data.type + ' Stop reason: ' + data.stop_reason);
+  }
+  return data.content[0].text;
 }
 
 // ============================================================
