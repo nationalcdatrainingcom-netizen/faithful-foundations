@@ -31,7 +31,7 @@ FORBIDDEN TERMS — automatic fail if any appear:
 REQUIRED SECTIONS — each must be present and complete:
 1. HEADER BLOCK: vocabulary word + child-friendly definition + Spanish translation, Fruit of Spirit named, Let's Think question + display instructions, materials checklist, daily resources checklist
 2. DISCOVERY CIRCLE: opening Fruitful Moment with full script, Let's Think review with teacher language, Heart Moment with exact script + scripture 10 words or fewer, main activity with 6-8 numbered steps + exact quoted language, transition Fruitful Moment
-3. CHOICE TIME: 3 interest areas with setup + teacher language, Signs of Learning box with NAEYC objective + Circle of Friends social scenario with exact CD-informed language, Fruit of Spirit observation
+3. CHOICE TIME: 3 interest areas with setup + teacher language, Signs of Learning box with NAEYC objective + Circle of Friends social scenario with exact language, Fruit of Spirit observation
 4. STORY GATHERING: specific book title + author, Before/During (2-3 pauses)/After with exact teacher scripts, vocabulary carry-forward
 5. SKILL BUILDERS PRIMARY: named activity, NAEYC objective, 5+ steps, teaching sequence TABLE with all 4 stages, multilingual learners section, including all children section, 3 observation questions
 6. SKILL BUILDERS ADDITIONAL: named activity, objective, teaching sequence TABLE with all 4 stages
@@ -83,20 +83,20 @@ async function reviewLesson(content, dayInfo) {
       'x-api-key': process.env.ANTHROPIC_API_KEY
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-5-20250514',
+      model: 'claude-sonnet-4-5-20250929',
       max_tokens: 2000,
       system: REVIEWER_SYSTEM_PROMPT,
       messages: [{
         role: 'user',
-        content: `Review this Daily Learning Experience for Day ${dayInfo.day_number} (${dayInfo.focus}, Age Band: ${dayInfo.age_band}):\n\n${content}`
+        content: 'Review this Daily Learning Experience for Day ' + dayInfo.day_number + ' (' + dayInfo.focus + ', Age Band: ' + dayInfo.age_band + '):\n\n' + content
       }]
     })
   });
   const data = await response.json();
   if (!response.ok || data.error) {
-    return { score: 0, passed: false, revision_notes: 'API error: ' + (data.error?.message || JSON.stringify(data)), missing_elements: ['API error'] };
+    return { score: 0, passed: false, revision_notes: 'API error: ' + (data.error && data.error.message || JSON.stringify(data)), missing_elements: ['API error'] };
   }
-  const text = data.content?.[0]?.text || '{}';
+  const text = data.content && data.content[0] && data.content[0].text || '{}';
   try {
     const clean = text.replace(/```json|```/g, '').trim();
     return JSON.parse(clean);
@@ -152,27 +152,23 @@ async function generateLessonContent(lessonData) {
     'prek': 'Pre-K (4-5 years) — kindergarten preparation, longer attention, emerging literacy and math, complex play, peer relationships central'
   };
 
-  const userMessage = `Generate a complete Daily Learning Experience for:
+  const prayer = MEALTIME_PRAYERS[(lessonData.day_number - 1) % 5].text;
 
-EXPLORATION: ${lessonData.exploration_title}
-WEEKLY QUESTION: ${lessonData.weekly_question}
-DAY: ${lessonData.day_number} of 25 (Week ${lessonData.week_number}, ${lessonData.day_type})
-TODAY'S FOCUS: ${lessonData.focus}
-FRUIT OF THE SPIRIT THIS WEEK: ${lessonData.fruit_of_spirit}
-AGE BAND: ${ageBandDescriptions[lessonData.age_band] || lessonData.age_band}
-VOCABULARY WORD: ${lessonData.vocabulary_word}
-LET'S THINK: ${lessonData.lets_think}
-REQUIRED BOOK: ${lessonData.required_book ? JSON.stringify(lessonData.required_book) : 'Teacher selects'}
-MEALTIME PRAYER FOR TODAY: ${MEALTIME_PRAYERS[(lessonData.day_number - 1) % 5].text}
-
-CONTINUITY CONTEXT:
-${lessonData.continuity_context || 'This is the first day of the exploration.'}
-
-${lessonData.revision_notes ? 'REVISION REQUIRED — Previous attempt failed review. Fix these specific issues:\n' + lessonData.revision_notes : ''}
-
-${lessonData.day_type === 'introduction' ? 'SPECIAL: Day 1 Introduction — include full learning area tour, introduce Class Tree Journal, Wonder Wall, and Tree Parts poster.' : ''}
-
-Generate the COMPLETE Daily Learning Experience. Every section. Every word. Full teaching sequences for all 4 stages.`;
+  const userMessage = 'Generate a complete Daily Learning Experience for:\n\n' +
+    'EXPLORATION: ' + lessonData.exploration_title + '\n' +
+    'WEEKLY QUESTION: ' + lessonData.weekly_question + '\n' +
+    'DAY: ' + lessonData.day_number + ' of 25 (Week ' + lessonData.week_number + ', ' + lessonData.day_type + ')\n' +
+    'TODAY\'S FOCUS: ' + lessonData.focus + '\n' +
+    'FRUIT OF THE SPIRIT THIS WEEK: ' + lessonData.fruit_of_spirit + '\n' +
+    'AGE BAND: ' + (ageBandDescriptions[lessonData.age_band] || lessonData.age_band) + '\n' +
+    'VOCABULARY WORD: ' + lessonData.vocabulary_word + '\n' +
+    'LET\'S THINK: ' + lessonData.lets_think + '\n' +
+    'REQUIRED BOOK: ' + (lessonData.required_book ? JSON.stringify(lessonData.required_book) : 'Teacher selects') + '\n' +
+    'MEALTIME PRAYER FOR TODAY: ' + prayer + '\n\n' +
+    'CONTINUITY CONTEXT:\n' + (lessonData.continuity_context || 'This is the first day of the exploration.') + '\n\n' +
+    (lessonData.revision_notes ? 'REVISION REQUIRED — Previous attempt failed review. Fix these specific issues:\n' + lessonData.revision_notes + '\n\n' : '') +
+    (lessonData.day_type === 'introduction' ? 'SPECIAL: Day 1 Introduction — include full learning area tour, introduce Class Tree Journal, Wonder Wall, and Tree Parts poster.\n\n' : '') +
+    'Generate the COMPLETE Daily Learning Experience. Every section. Every word. Full teaching sequences for all 4 stages.';
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -182,7 +178,7 @@ Generate the COMPLETE Daily Learning Experience. Every section. Every word. Full
       'x-api-key': process.env.ANTHROPIC_API_KEY
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-5-20250514',
+      model: 'claude-sonnet-4-5-20250929',
       max_tokens: 8000,
       system: FF_SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userMessage }]
@@ -191,10 +187,10 @@ Generate the COMPLETE Daily Learning Experience. Every section. Every word. Full
 
   const data = await response.json();
   if (!response.ok || data.error) {
-    throw new Error('API error: ' + (data.error?.message || JSON.stringify(data.error) || 'Unknown'));
+    throw new Error('API error: ' + (data.error && data.error.message || JSON.stringify(data.error) || 'Unknown'));
   }
   if (!data.content || !data.content[0] || !data.content[0].text) {
-    throw new Error('Empty API response. Full response: ' + JSON.stringify(data));
+    throw new Error('Empty API response: ' + JSON.stringify(data));
   }
   return data.content[0].text;
 }
@@ -237,7 +233,7 @@ router.get('/debug-api', requireAdmin, async (req, res) => {
         'x-api-key': process.env.ANTHROPIC_API_KEY
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-5-20250514',
+        model: 'claude-sonnet-4-5-20250929',
         max_tokens: 50,
         messages: [{ role: 'user', content: 'Say hello in 5 words.' }]
       })
@@ -253,7 +249,7 @@ async function runBatchJob(jobId, explorationId, ageBand, dayList, scopeSequence
   const job = batchJobs[jobId];
 
   for (const dayNum of dayList) {
-    const dayData = scopeSequence && scopeSequence.find(d => d.day === dayNum);
+    const dayData = scopeSequence && scopeSequence.find(function(d) { return d.day === dayNum; });
     if (!dayData) {
       job.log.push({ day: dayNum, status: 'skipped', note: 'No scope data for this day' });
       job.failed++;
@@ -263,28 +259,27 @@ async function runBatchJob(jobId, explorationId, ageBand, dayList, scopeSequence
 
     job.log.push({ day: dayNum, status: 'generating', note: 'Generating...' });
 
-    let content = null;
-    let reviewResult = null;
-    let attempts = 0;
-    const maxAttempts = 3;
+    var content = null;
+    var reviewResult = null;
+    var attempts = 0;
+    var maxAttempts = 3;
 
     while (attempts < maxAttempts) {
       attempts++;
       try {
-        content = await generateLessonContent({
-          ...dayData,
+        content = await generateLessonContent(Object.assign({}, dayData, {
           exploration_id: explorationId,
           exploration_title: explorationTitle || 'Exploring Trees',
           age_band: ageBand,
-          revision_notes: attempts > 1 ? reviewResult && reviewResult.revision_notes : null
-        });
+          revision_notes: attempts > 1 && reviewResult ? reviewResult.revision_notes : null
+        }));
 
         if (!content) throw new Error('Empty content from generator');
 
         reviewResult = await reviewLesson(content, { day_number: dayNum, focus: dayData.focus, age_band: ageBand });
 
         if (reviewResult.passed && reviewResult.score === 100) {
-          const lessonId = uuidv4();
+          var lessonId = uuidv4();
           await pool.query(
             'INSERT INTO daily_lessons (id, exploration_id, day_number, week_number, day_type, age_band, focus, fruit_of_spirit, vocabulary_word, lets_think, required_book, content, status, mary_notes, generation_prompt, continuity_notes, approved_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,NOW()) ON CONFLICT (exploration_id, day_number, age_band) DO UPDATE SET content=$12, status=$13, mary_notes=$14, approved_at=NOW()',
             [lessonId, explorationId, dayNum, dayData.week, dayData.type, ageBand, dayData.focus,
@@ -308,20 +303,20 @@ async function runBatchJob(jobId, explorationId, ageBand, dayList, scopeSequence
       } catch (err) {
         job.log[job.log.length - 1] = { day: dayNum, status: 'error', note: 'Attempt ' + attempts + ' error: ' + err.message };
       }
-      await new Promise(r => setTimeout(r, 3000));
+      await new Promise(function(r) { setTimeout(r, 3000); });
     }
 
     if (!reviewResult || !reviewResult.passed || reviewResult.score < 100) {
       if (content) {
-        const lessonId = uuidv4();
+        var draftId = uuidv4();
         try {
           await pool.query(
             'INSERT INTO daily_lessons (id, exploration_id, day_number, week_number, day_type, age_band, focus, fruit_of_spirit, vocabulary_word, lets_think, required_book, content, status, mary_notes, generation_prompt, continuity_notes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) ON CONFLICT (exploration_id, day_number, age_band) DO UPDATE SET content=$12, status=$13, mary_notes=$14',
-            [lessonId, explorationId, dayNum, dayData.week, dayData.type, ageBand, dayData.focus,
+            [draftId, explorationId, dayNum, dayData.week, dayData.type, ageBand, dayData.focus,
              dayData.fruit_of_spirit || '', dayData.vocab || '', dayData.letsThink || '',
              dayData.book ? JSON.stringify(dayData.book) : null, content, 'draft',
-             'Needs review. Score: ' + (reviewResult && reviewResult.score || 0) + '/100. ' + (reviewResult && reviewResult.revision_notes || 'Unknown'),
-             JSON.stringify({ attempts, final_score: reviewResult && reviewResult.score }),
+             'Needs review. Score: ' + (reviewResult ? reviewResult.score : 0) + '/100. ' + (reviewResult ? reviewResult.revision_notes : 'Unknown'),
+             JSON.stringify({ attempts: attempts, final_score: reviewResult ? reviewResult.score : 0 }),
              dayData.continuity || null]
           );
         } catch (dbErr) {
@@ -332,7 +327,7 @@ async function runBatchJob(jobId, explorationId, ageBand, dayList, scopeSequence
     }
 
     job.completed++;
-    await new Promise(r => setTimeout(r, 5000));
+    await new Promise(function(r) { setTimeout(r, 5000); });
   }
 
   job.status = 'complete';
