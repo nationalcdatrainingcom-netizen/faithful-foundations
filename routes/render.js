@@ -336,7 +336,7 @@ p{margin:5px 0;}
 .diagram-caption{font-size:12px;color:var(--txl);margin-top:6px;font-style:italic;}
 
 /* HIDDEN PAGE PANELS */
-.page-panel{display:none;background:#fff;border-radius:12px;padding:28px;margin-bottom:28px;box-shadow:0 2px 12px rgba(0,0,0,.08);}
+.page-panel{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:#fff;z-index:500;overflow-y:auto;padding:28px 32px;}
 .page-panel.active{display:block;}
 .page-panel-title{font-family:'Playfair Display',serif;font-size:20px;margin-bottom:16px;}
 .panel-close{margin-top:20px;padding:8px 20px;background:var(--gd);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;}
@@ -404,7 +404,7 @@ p{margin:5px 0;}
     <p style="color:var(--txl);font-size:13px;margin-bottom:16px;">Gather all items before children arrive. This checklist comes directly from your Header Block materials list.</p>
     <div id="prep-content">${md2html(sections['HEADER BLOCK'] || sections['1. HEADER BLOCK'] || '')}</div>
     <button class="print-btn" onclick="window.print()">🖨️ Print Prep Checklist</button>
-    <button class="panel-close" onclick="togglePanel('panel-prep')">← Close</button>
+    <button class="panel-close" onclick="togglePanel('panel-prep');document.body.style.overflow='';">← Close</button>
   </div>
 
   <!-- FRUITFUL MOMENTS PANEL -->
@@ -413,7 +413,7 @@ p{margin:5px 0;}
     <p style="color:var(--txl);font-size:13px;margin-bottom:16px;">Print and post in your Discovery Circle area. Use throughout the day for transitions and gathering.</p>
     <div id="fm-list"></div>
     <button class="print-btn" onclick="window.print()">🖨️ Print Fruitful Moments</button>
-    <button class="panel-close" onclick="togglePanel('panel-fm')">← Close</button>
+    <button class="panel-close" onclick="togglePanel('panel-fm');document.body.style.overflow='';">← Close</button>
   </div>
 
   <!-- PREP BANNER -->
@@ -426,10 +426,23 @@ p{margin:5px 0;}
     <button class="prep-banner-btn" onclick="togglePanel('panel-prep')">Open Prep Checklist</button>
   </div>
 
-  <!-- TREE PARTS DIAGRAM -->
+  <!-- TREE PARTS PHOTO + LABELED OVERLAY -->
   <div class="diagram-box" id="sec-header">
-    ${TREE_PARTS_SVG}
-    <div class="diagram-caption">Tree Parts Reference — trunk, branches, leaves, roots (underground)</div>
+    <div style="position:relative;display:inline-block;max-width:480px;width:100%;">
+      <img
+        src="https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?w=600&q=80"
+        alt="Tree with visible roots, trunk, branches and leaves"
+        style="width:100%;border-radius:10px;display:block;"
+        onerror="this.src='https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=600&q=80'"
+      >
+      <!-- Label overlays -->
+      <div style="position:absolute;top:8%;right:4%;background:rgba(27,67,50,0.88);color:#D8F3DC;padding:4px 11px;border-radius:12px;font-size:12px;font-weight:800;">Leaves</div>
+      <div style="position:absolute;top:35%;right:4%;background:rgba(90,53,25,0.88);color:#F7E6D3;padding:4px 11px;border-radius:12px;font-size:12px;font-weight:800;">Branches</div>
+      <div style="position:absolute;top:62%;left:4%;background:rgba(107,66,38,0.88);color:#F7E6D3;padding:4px 11px;border-radius:12px;font-size:12px;font-weight:800;">Trunk</div>
+      <div style="position:absolute;bottom:6%;left:4%;background:rgba(139,105,20,0.88);color:#FFF8E0;padding:4px 11px;border-radius:12px;font-size:12px;font-weight:800;">Roots</div>
+    </div>
+    <div class="diagram-caption">Tree Parts — hover over the labels to review with children</div>
+    <div style="font-size:11px;color:var(--txl);margin-top:4px;">Photo: Unsplash</div>
   </div>
 
   ${bookCoverUrl ? `<div class="book-widget"><img src="${bookCoverUrl}" class="book-cover" alt="book cover"><div class="book-info"><strong>${lesson.required_book ? (typeof lesson.required_book === 'string' ? JSON.parse(lesson.required_book).title : lesson.required_book.title) : ''}</strong><em>for Story Gathering today</em></div></div>` : ''}
@@ -623,20 +636,33 @@ function togglePanel(id) {
   const panels = ['panel-prep', 'panel-fm'];
   panels.forEach(p => {
     const el = document.getElementById(p);
+    if (!el) return;
     if (p === id) {
-      const wasActive = el.classList.contains('active');
       el.classList.toggle('active');
-      if (!wasActive) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (el.classList.contains('active')) {
+        el.scrollTop = 0; // reset scroll to top of panel
+        document.body.style.overflow = 'hidden'; // prevent background scroll
+      } else {
+        document.body.style.overflow = '';
+      }
     } else {
       el.classList.remove('active');
     }
   });
+  // If no panels are active, restore scroll
+  if (!document.querySelector('.page-panel.active')) {
+    document.body.style.overflow = '';
+  }
 }
 
 // JUMP TO
 function jumpTo(id) {
   const el = document.getElementById(id);
-  if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  if (!el) return;
+  // Account for sticky topbar height (~52px) + small padding
+  const topbarH = document.querySelector('.topbar') ? document.querySelector('.topbar').offsetHeight : 52;
+  const y = el.getBoundingClientRect().top + window.pageYOffset - topbarH - 12;
+  window.scrollTo({ top: y, behavior: 'smooth' });
 }
 
 // COPY FAMILY CONNECTION
