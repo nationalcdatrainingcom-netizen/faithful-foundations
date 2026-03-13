@@ -137,24 +137,30 @@
   .print-resource-panel { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: white; z-index: 2000; overflow-y: auto; padding: 40px; }
   .print-resource-panel.active { display: block; }
   .print-panel-close { position: fixed; top: 16px; right: 24px; background: var(--green); color: white; border: none; border-radius: 8px; padding: 8px 18px; font-size: 14px; cursor: pointer; font-weight: 700; z-index: 2001; }
-  .print-panel-print { position: fixed; top: 16px; right: 150px; background: var(--gold); color: white; border: none; border-radius: 8px; padding: 8px 18px; font-size: 14px; cursor: pointer; font-weight: 700; z-index: 2001; }
-  .cb-center-card { background: #F0FFF4; border: 2px solid var(--green); border-radius: 12px; padding: 24px; margin-bottom: 0; page-break-after: always; break-after: page; }
-  .cb-center-name { font-size: 18px; font-weight: 700; color: var(--green); margin-bottom: 6px; }
+  .print-panel-print { position: fixed; top: 16px; right: 150px; background: var(--gold); color: #1A1A2E; border: none; border-radius: 8px; padding: 8px 18px; font-size: 14px; cursor: pointer; font-weight: 700; z-index: 2001; }
+  /* Curiosity Builders: digital = single column with gap */
+  .cb-center-card { background: #F0FFF4; border: 2px solid var(--green); border-radius: 12px; padding: 24px; margin-bottom: 20px; page-break-after: always; break-after: page; }
+  .cb-center-name { font-size: 18px; font-weight: 700; color: var(--green); margin-bottom: 4px; }
   .cb-center-week { font-size: 12px; color: var(--text-light); margin-bottom: 14px; }
-  .cb-questions { list-style: none; padding: 0; }
+  .cb-questions { list-style: none; padding: 0; margin: 0; }
   .cb-questions li { padding: 8px 12px 8px 32px; position: relative; border-bottom: 1px solid #C6F6D5; font-size: 14px; line-height: 1.6; }
   .cb-questions li::before { content: "?"; position: absolute; left: 8px; color: var(--green); font-weight: 900; font-size: 16px; }
-  .fm-print-card { background: linear-gradient(135deg, #FFF8F0, #FFF3E0); border: 2px solid #F4A261; border-radius: 12px; padding: 24px; margin-bottom: 24px; page-break-inside: avoid; }
-  .fm-print-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; page-break-after: always; break-after: page; margin-bottom: 0; }
-  .fm-print-pair .fm-print-card { margin-bottom: 0; }
-  .fm-print-title { font-size: 17px; font-weight: 700; color: #E76F51; margin-bottom: 12px; }
+  /* Fruitful Moments: digital = single column; print = one per page */
+  .fm-print-card { background: linear-gradient(135deg, #FFF8F0, #FFF3E0); border: 2px solid #F4A261; border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+  .fm-print-pair { display: block; }
+  .fm-print-pair .fm-print-card { page-break-after: always; break-after: page; margin-bottom: 0; }
+  .fm-print-title { font-size: 17px; font-weight: 700; color: #E76F51; margin-bottom: 10px; }
+  /* Prayer: unchanged */
   .prayer-card { background: linear-gradient(135deg, #F0FFF4, #E8F5E9); border: 2px solid var(--green); border-radius: 12px; padding: 32px 24px; margin-bottom: 0; page-break-after: always; break-after: page; text-align: center; min-height: 60vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
   .prayer-day { font-size: 12px; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
   .prayer-text { font-size: 16px; line-height: 1.8; color: var(--green); font-style: italic; font-weight: 600; }
-  .setup-area-card { background: #EBF8FF; border: 2px solid #90CDF4; border-radius: 12px; padding: 20px; margin-bottom: 0; page-break-inside: avoid; }
+  /* Choice Time Setup: digital = single column with gap; print = two per page */
+  .setup-area-card { background: #EBF8FF; border: 2px solid #90CDF4; border-radius: 12px; padding: 20px; margin-bottom: 20px; page-break-inside: avoid; }
+  .setup-area-name { font-size: 16px; font-weight: 700; color: #2B6CB0; margin-bottom: 8px; }
   .setup-area-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; page-break-after: always; break-after: page; margin-bottom: 0; }
   .setup-area-pair .setup-area-card { margin-bottom: 0; }
-  .setup-area-name { font-size: 16px; font-weight: 700; color: #2B6CB0; margin-bottom: 8px; }
+  /* Vocab cards: print one per page */
+  .vocab-print-card { background: white; border: 3px solid #1B4332; border-radius: 16px; overflow: hidden; margin-bottom: 0; page-break-after: always; break-after: page; }
   @media print { .print-panel-close, .print-panel-print { display: none !important; } }
 
   /* LESSON VIEWER */
@@ -538,23 +544,28 @@ function renderWeeklyResources(weekLessons, startDay) {
   <!-- PRINT PANELS (hidden overlays) -->
   <div class="print-resource-panel" id="printPanel-cb">
     <button class="print-panel-close" onclick="closePrintPanel('printPanel-cb')">✕ Close</button>
-    <button class="print-panel-print" onclick="window.print()">🖨️ Print</button>
+    <button class="print-panel-print" onclick="printPanelContent('printPanel-cb-content')">🖨️ Print</button>
     <div id="printPanel-cb-content"></div>
   </div>
   <div class="print-resource-panel" id="printPanel-fm">
     <button class="print-panel-close" onclick="closePrintPanel('printPanel-fm')">✕ Close</button>
-    <button class="print-panel-print" onclick="window.print()">🖨️ Print</button>
+    <button class="print-panel-print" onclick="printPanelContent('printPanel-fm-content')">🖨️ Print</button>
     <div id="printPanel-fm-content"></div>
   </div>
   <div class="print-resource-panel" id="printPanel-prayers">
     <button class="print-panel-close" onclick="closePrintPanel('printPanel-prayers')">✕ Close</button>
-    <button class="print-panel-print" onclick="window.print()">🖨️ Print</button>
+    <button class="print-panel-print" onclick="printPanelContent('printPanel-prayers-content')">🖨️ Print</button>
     <div id="printPanel-prayers-content"></div>
   </div>
   <div class="print-resource-panel" id="printPanel-setup">
     <button class="print-panel-close" onclick="closePrintPanel('printPanel-setup')">✕ Close</button>
-    <button class="print-panel-print" onclick="window.print()">🖨️ Print</button>
+    <button class="print-panel-print" onclick="printPanelContent('printPanel-setup-content')">🖨️ Print</button>
     <div id="printPanel-setup-content"></div>
+  </div>
+  <div class="print-resource-panel" id="printPanel-vocab">
+    <button class="print-panel-close" onclick="closePrintPanel('printPanel-vocab')">✕ Close</button>
+    <button class="print-panel-print" onclick="printPanelContent('printPanel-vocab-content')">🖨️ Print</button>
+    <div id="printPanel-vocab-content"></div>
   </div>
 
   <div class="weekly-resources">
@@ -587,6 +598,12 @@ function renderWeeklyResources(weekLessons, startDay) {
         <div class="wr-card-title">🎨 Choice Time Area Setup</div>
         <div class="wr-card-desc">Materials and setup for all Choice Time learning centers this week. Prepare areas before children arrive.</div>
         <button class="wr-print-btn blue" onclick="openAreaSetup(${weekNum})">📋 View &amp; Print Area Setup</button>
+      </div>
+
+      <div class="wr-card purple">
+        <div class="wr-card-title">📖 Vocabulary Word Cards</div>
+        <div class="wr-card-desc">Daily vocabulary word cards for the week — each with an illustration, English word, Spanish translation, and pronunciation guide. Print and display in the classroom.</div>
+        <button class="wr-print-btn purple" onclick="openVocabCards(${weekNum})">📋 View &amp; Print Vocab Cards</button>
       </div>
 
     </div>
@@ -903,8 +920,122 @@ function openAreaSetup(weekNum) {
   document.getElementById('printPanel-setup').classList.add('active');
 }
 
+function openVocabCards(weekNum) {
+  // Vocabulary words for Exploring Trees (5 per week, keyed by week number)
+  const vocabByWeek = {
+    1: [
+      { en: 'Tree',       es: 'Árbol',    pron: 'AHR-bol',      def: 'A tall plant with a trunk, branches, and leaves',                    img: 'https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=300&q=80' },
+      { en: 'Roots',      es: 'Raíces',   pron: 'rah-EE-sehs',  def: 'The parts of a tree that grow underground and hold it in the soil',  img: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=300&q=80' },
+      { en: 'Trunk',      es: 'Tronco',   pron: 'TROHN-koh',    def: 'The thick main stem of a tree',                                       img: 'https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?w=300&q=80' },
+      { en: 'Branches',   es: 'Ramas',    pron: 'RAH-mahs',     def: 'The parts that grow out from the trunk and hold the leaves',         img: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=300&q=80' },
+      { en: 'Leaves',     es: 'Hojas',    pron: 'OH-hahs',      def: 'The flat, green parts of a tree that make food from sunlight',       img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&q=80' }
+    ],
+    2: [
+      { en: 'Bark',       es: 'Corteza',  pron: 'kor-TEH-sah',  def: 'The rough outer covering that protects the tree',                    img: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=300&q=80' },
+      { en: 'Seeds',      es: 'Semillas', pron: 'seh-MEE-yahs', def: 'The tiny parts of a plant that can grow into new trees',             img: 'https://images.unsplash.com/photo-1508193638397-1c4234db14d8?w=300&q=80' },
+      { en: 'Fruit',      es: 'Fruta',    pron: 'FROO-tah',     def: 'The part of a tree that holds the seeds and is often good to eat',   img: 'https://images.unsplash.com/photo-1490474418585-ba9bad8fd0ea?w=300&q=80' },
+      { en: 'Sunlight',   es: 'Sol',      pron: 'sohl',         def: 'The light from the sun that trees use to make their food',           img: 'https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?w=300&q=80' },
+      { en: 'Water',      es: 'Agua',     pron: 'AH-gwah',      def: 'The liquid that roots absorb from the soil to help the tree grow',   img: 'https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?w=300&q=80' }
+    ],
+    3: [
+      { en: 'Forest',     es: 'Bosque',   pron: 'BOHS-keh',     def: 'A large area with many trees growing close together',               img: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=300&q=80' },
+      { en: 'Soil',       es: 'Tierra',   pron: 'TYEH-rah',     def: 'The dirt and minerals that trees grow in',                           img: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=300&q=80' },
+      { en: 'Canopy',     es: 'Dosel',    pron: 'doh-SEHL',     def: 'The top layer of leaves and branches that shade the ground below',  img: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=300&q=80' },
+      { en: 'Shelter',    es: 'Refugio',  pron: 'reh-FOO-hyoh', def: 'A safe place to rest — trees provide shelter for many animals',     img: 'https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=300&q=80' },
+      { en: 'Grow',       es: 'Crecer',   pron: 'kreh-SEHR',    def: 'To get bigger and taller over time, like a tree does',              img: 'https://images.unsplash.com/photo-1508193638397-1c4234db14d8?w=300&q=80' }
+    ],
+    4: [
+      { en: 'Seasons',    es: 'Estaciones', pron: 'ehs-tah-SYOH-nehs', def: 'The four times of year — spring, summer, fall, and winter',  img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&q=80' },
+      { en: 'Change',     es: 'Cambio',   pron: 'KAHM-byoh',    def: 'When something becomes different — trees change with the seasons',  img: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=300&q=80' },
+      { en: 'Observe',    es: 'Observar', pron: 'ohb-sehr-BAHR',def: 'To look carefully and notice details with your senses',             img: 'https://images.unsplash.com/photo-1490474418585-ba9bad8fd0ea?w=300&q=80' },
+      { en: 'Compare',    es: 'Comparar', pron: 'kohm-pah-RAHR',def: 'To look at two things and notice what is the same or different',    img: 'https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=300&q=80' },
+      { en: 'Wonder',     es: 'Asombro',  pron: 'ah-SOHM-broh', def: 'A feeling of surprise and curiosity about something amazing',      img: 'https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?w=300&q=80' }
+    ],
+    5: [
+      { en: 'Community',  es: 'Comunidad',pron: 'koh-moo-nee-DAHD', def: 'A group that lives and grows together — like a forest of trees', img: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=300&q=80' },
+      { en: 'Roots',      es: 'Raíces',   pron: 'rah-EE-sehs',  def: 'What holds us — both trees and people — grounded and strong',      img: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=300&q=80' },
+      { en: 'Growth',     es: 'Crecimiento', pron: 'kreh-see-MYEHN-toh', def: 'The process of becoming bigger, stronger, and wiser over time', img: 'https://images.unsplash.com/photo-1508193638397-1c4234db14d8?w=300&q=80' },
+      { en: 'Unique',     es: 'Único',    pron: 'OO-nee-koh',   def: 'One of a kind — every tree, like every child, is beautifully unique', img: 'https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=300&q=80' },
+      { en: 'Connected',  es: 'Conectado',pron: 'koh-nehk-TAH-doh', def: 'Joined together — tree roots and people in a community are connected', img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&q=80' }
+    ]
+  };
+
+  const words = vocabByWeek[weekNum] || vocabByWeek[1];
+  const dayStart = (weekNum - 1) * 5 + 1;
+
+  const renderCard = (w, i) => `
+    <div style="background:white;border:3px solid #1B4332;border-radius:16px;padding:0;overflow:hidden;page-break-inside:avoid;page-break-after:always;break-after:page;font-family:Arial,sans-serif;">
+      <div style="background:#1B4332;color:#D8F3DC;padding:10px 20px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1px;display:flex;justify-content:space-between;">
+        <span>Faithful Foundations · Exploring Trees</span>
+        <span>Day ${dayStart + i} · Week ${weekNum}</span>
+      </div>
+      <img src="${w.img}" alt="${w.en}" style="width:100%;height:220px;object-fit:cover;display:block;" onerror="this.style.display='none'">
+      <div style="padding:24px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:16px;">
+          <div>
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#4A5568;font-weight:700;margin-bottom:4px;">English</div>
+            <div style="font-size:36px;font-weight:800;color:#1B4332;font-family:Georgia,serif;">${w.en}</div>
+            <div style="font-size:14px;color:#1A1A2E;margin-top:6px;line-height:1.5;">${w.def}</div>
+          </div>
+          <div style="background:#F0FFF4;border-radius:10px;padding:16px;">
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#2D6A4F;font-weight:700;margin-bottom:4px;">En Español</div>
+            <div style="font-size:32px;font-weight:800;color:#2D6A4F;font-family:Georgia,serif;">${w.es}</div>
+            <div style="font-size:13px;color:#4A5568;margin-top:8px;">Pronunciation for English speakers:</div>
+            <div style="font-size:16px;font-weight:700;color:#1B4332;font-style:italic;margin-top:2px;">${w.pron}</div>
+          </div>
+        </div>
+        <div style="background:#1B4332;color:#D8F3DC;border-radius:8px;padding:10px 16px;font-size:13px;text-align:center;">
+          ✝ <em style="font-style:italic;">God made every living thing — trees, children, and all of creation — wonderfully unique.</em>
+        </div>
+      </div>
+    </div>`;
+
+  const html = '<div style="max-width:700px;margin:0 auto;">' +
+    '<div style="text-align:center;padding:24px;page-break-after:always;break-after:page;border-bottom:3px solid #1B4332;">' +
+    '<div style="font-size:36px;margin-bottom:10px;">📖</div>' +
+    '<h1 style="font-size:24px;color:#1B4332;margin-bottom:8px;">Vocabulary Word Cards</h1>' +
+    '<h2 style="font-size:16px;color:#2D6A4F;margin-bottom:14px;font-weight:400;">Week ' + weekNum + ' · Exploring Trees · Faithful Foundations</h2>' +
+    '<p style="font-size:13px;color:#4A5568;max-width:500px;margin:0 auto;line-height:1.7;">Print one card per day. Display in the classroom at child eye level. Point to the word each morning during Discovery Circle. Practice saying it together in English and Spanish.</p>' +
+    '</div>' +
+    words.map((w, i) => renderCard(w, i)).join('') +
+    '</div>';
+
+  document.getElementById('printPanel-vocab-content').innerHTML = html;
+  document.getElementById('printPanel-vocab').classList.add('active');
+}
+
 function closePrintPanel(id) {
   document.getElementById(id).classList.remove('active');
+}
+
+// True print: opens a new window with just the content, triggers print dialog
+function printPanelContent(contentId) {
+  const el = document.getElementById(contentId);
+  if (!el) return;
+  const win = window.open('', '_blank', 'width=900,height=700');
+  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Print</title>');
+  win.document.write('<style>');
+  win.document.write('body{font-family:Arial,sans-serif;margin:0;padding:0;}');
+  win.document.write('.cb-center-card{background:#F0FFF4;border:2px solid #1B4332;border-radius:12px;padding:24px;page-break-after:always;break-after:page;}');
+  win.document.write('.cb-center-name{font-size:18px;font-weight:700;color:#1B4332;margin-bottom:4px;}');
+  win.document.write('.cb-questions{list-style:none;padding:0;margin:0;}');
+  win.document.write('.cb-questions li{padding:8px 12px 8px 28px;position:relative;border-bottom:1px solid #C6F6D5;font-size:14px;line-height:1.6;}');
+  win.document.write('.cb-questions li::before{content:"?";position:absolute;left:6px;color:#1B4332;font-weight:900;font-size:15px;}');
+  win.document.write('.fm-print-pair{display:block;}');
+  win.document.write('.fm-print-card{background:#FFF8F0;border:2px solid #F4A261;border-radius:12px;padding:24px;page-break-after:always;break-after:page;}');
+  win.document.write('.fm-print-title{font-size:17px;font-weight:700;color:#E76F51;margin-bottom:10px;}');
+  win.document.write('.prayer-card{border:2px solid #1B4332;border-radius:12px;padding:32px 24px;page-break-after:always;break-after:page;text-align:center;min-height:80vh;display:flex;flex-direction:column;align-items:center;justify-content:center;}');
+  win.document.write('.setup-area-pair{display:grid;grid-template-columns:1fr 1fr;gap:16px;page-break-after:always;break-after:page;}');
+  win.document.write('.setup-area-card{background:#EBF8FF;border:2px solid #90CDF4;border-radius:12px;padding:20px;}');
+  win.document.write('.vocab-print-card{border:3px solid #1B4332;border-radius:16px;overflow:hidden;page-break-after:always;break-after:page;}');
+  win.document.write('ul{padding-left:20px;}li{margin-bottom:4px;}p{margin:4px 0;}ol{padding-left:20px;}');
+  win.document.write('</style></head><body>');
+  win.document.write(el.innerHTML);
+  win.document.write('</body></html>');
+  win.document.close();
+  // Wait for images to load before printing
+  win.onload = function() { win.focus(); win.print(); };
+  setTimeout(function() { win.focus(); win.print(); }, 800);
 }
 
 // ============================================================
