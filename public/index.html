@@ -921,83 +921,82 @@ function openAreaSetup(weekNum) {
 }
 
 function openVocabCards(weekNum) {
-  // Vocabulary words for Exploring Trees (5 per week, keyed by week number)
+  // Emoji-illustrated vocab cards — 100% accurate, no broken image risk, prints beautifully
   const vocabByWeek = {
     1: [
-      { en: 'Tree',       es: 'Árbol',    pron: 'AHR-bol',      def: 'A tall plant with a trunk, branches, and leaves',                    img: 'https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=300&q=80' },
-      { en: 'Roots',      es: 'Raíces',   pron: 'rah-EE-sehs',  def: 'The parts of a tree that grow underground and hold it in the soil',  img: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=300&q=80' },
-      { en: 'Trunk',      es: 'Tronco',   pron: 'TROHN-koh',    def: 'The thick main stem of a tree',                                       img: 'https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?w=300&q=80' },
-      { en: 'Branches',   es: 'Ramas',    pron: 'RAH-mahs',     def: 'The parts that grow out from the trunk and hold the leaves',         img: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=300&q=80' },
-      { en: 'Leaves',     es: 'Hojas',    pron: 'OH-hahs',      def: 'The flat, green parts of a tree that make food from sunlight',       img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&q=80' }
+      { en: 'Tree',     es: 'Árbol',      pron: 'AHR-bol',           def: 'A tall plant with a trunk, branches, and leaves that can live for many years', emoji: '🌳', bg: '#D8F3DC', fg: '#1B4332' },
+      { en: 'Roots',    es: 'Raíces',     pron: 'rah-EE-sehs',       def: 'The parts of a tree that grow underground, hold it in the soil, and drink up water', emoji: '🌱', bg: '#FFF3CD', fg: '#774936' },
+      { en: 'Trunk',    es: 'Tronco',     pron: 'TROHN-koh',         def: 'The thick, strong main stem of a tree that holds up all the branches', emoji: '🪵', bg: '#F7E6D3', fg: '#5A3519' },
+      { en: 'Branches', es: 'Ramas',      pron: 'RAH-mahs',          def: 'The parts that grow out from the trunk and hold the leaves and fruit', emoji: '🌿', bg: '#D8F3DC', fg: '#2D6A4F' },
+      { en: 'Leaves',   es: 'Hojas',      pron: 'OH-hahs',           def: 'The flat green parts of a tree that capture sunlight and make food for the tree', emoji: '🍃', bg: '#D8F3DC', fg: '#1B4332' }
     ],
     2: [
-      { en: 'Bark',       es: 'Corteza',  pron: 'kor-TEH-sah',  def: 'The rough outer covering that protects the tree',                    img: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=300&q=80' },
-      { en: 'Seeds',      es: 'Semillas', pron: 'seh-MEE-yahs', def: 'The tiny parts of a plant that can grow into new trees',             img: 'https://images.unsplash.com/photo-1508193638397-1c4234db14d8?w=300&q=80' },
-      { en: 'Fruit',      es: 'Fruta',    pron: 'FROO-tah',     def: 'The part of a tree that holds the seeds and is often good to eat',   img: 'https://images.unsplash.com/photo-1490474418585-ba9bad8fd0ea?w=300&q=80' },
-      { en: 'Sunlight',   es: 'Sol',      pron: 'sohl',         def: 'The light from the sun that trees use to make their food',           img: 'https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?w=300&q=80' },
-      { en: 'Water',      es: 'Agua',     pron: 'AH-gwah',      def: 'The liquid that roots absorb from the soil to help the tree grow',   img: 'https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?w=300&q=80' }
+      { en: 'Bark',     es: 'Corteza',    pron: 'kor-TEH-sah',       def: 'The rough outer covering on a tree trunk that protects it like skin', emoji: '🌲', bg: '#F7E6D3', fg: '#5A3519' },
+      { en: 'Seeds',    es: 'Semillas',   pron: 'seh-MEE-yahs',      def: 'Tiny parts inside fruit or pods that can grow into brand new trees', emoji: '🌰', bg: '#FFF3CD', fg: '#774936' },
+      { en: 'Fruit',    es: 'Fruta',      pron: 'FROO-tah',          def: 'The sweet part of a tree that grows around seeds — like apples, peaches, and pears', emoji: '🍎', bg: '#FFF3E0', fg: '#C4512B' },
+      { en: 'Sunlight', es: 'Sol',        pron: 'sohl',              def: 'The bright light from the sun that trees use to make their own food', emoji: '☀️', bg: '#FFFBEB', fg: '#744210' },
+      { en: 'Water',    es: 'Agua',       pron: 'AH-gwah',           def: 'The liquid that tree roots soak up from the soil to help the tree grow tall', emoji: '💧', bg: '#EBF8FF', fg: '#2B6CB0' }
     ],
     3: [
-      { en: 'Forest',     es: 'Bosque',   pron: 'BOHS-keh',     def: 'A large area with many trees growing close together',               img: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=300&q=80' },
-      { en: 'Soil',       es: 'Tierra',   pron: 'TYEH-rah',     def: 'The dirt and minerals that trees grow in',                           img: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=300&q=80' },
-      { en: 'Canopy',     es: 'Dosel',    pron: 'doh-SEHL',     def: 'The top layer of leaves and branches that shade the ground below',  img: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=300&q=80' },
-      { en: 'Shelter',    es: 'Refugio',  pron: 'reh-FOO-hyoh', def: 'A safe place to rest — trees provide shelter for many animals',     img: 'https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=300&q=80' },
-      { en: 'Grow',       es: 'Crecer',   pron: 'kreh-SEHR',    def: 'To get bigger and taller over time, like a tree does',              img: 'https://images.unsplash.com/photo-1508193638397-1c4234db14d8?w=300&q=80' }
+      { en: 'Forest',   es: 'Bosque',     pron: 'BOHS-keh',          def: 'A large area where many trees grow close together and animals make their home', emoji: '🌲🌳🌲', bg: '#D8F3DC', fg: '#1B4332' },
+      { en: 'Soil',     es: 'Tierra',     pron: 'TYEH-rah',          def: 'The rich dirt that holds roots and gives trees the minerals they need to grow', emoji: '🌍', bg: '#F7E6D3', fg: '#5A3519' },
+      { en: 'Canopy',   es: 'Dosel',      pron: 'doh-SEHL',          def: 'The high umbrella of leaves and branches at the top of a tree or forest', emoji: '🌿', bg: '#D8F3DC', fg: '#2D6A4F' },
+      { en: 'Shelter',  es: 'Refugio',    pron: 'reh-FOO-hyoh',      def: 'A safe, protected place to rest — trees provide shelter for birds, squirrels, and people', emoji: '🏡', bg: '#EBF8FF', fg: '#2B6CB0' },
+      { en: 'Grow',     es: 'Crecer',     pron: 'kreh-SEHR',         def: 'To get bigger, taller, and stronger over time — just like trees and children', emoji: '📈', bg: '#D8F3DC', fg: '#276749' }
     ],
     4: [
-      { en: 'Seasons',    es: 'Estaciones', pron: 'ehs-tah-SYOH-nehs', def: 'The four times of year — spring, summer, fall, and winter',  img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&q=80' },
-      { en: 'Change',     es: 'Cambio',   pron: 'KAHM-byoh',    def: 'When something becomes different — trees change with the seasons',  img: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=300&q=80' },
-      { en: 'Observe',    es: 'Observar', pron: 'ohb-sehr-BAHR',def: 'To look carefully and notice details with your senses',             img: 'https://images.unsplash.com/photo-1490474418585-ba9bad8fd0ea?w=300&q=80' },
-      { en: 'Compare',    es: 'Comparar', pron: 'kohm-pah-RAHR',def: 'To look at two things and notice what is the same or different',    img: 'https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=300&q=80' },
-      { en: 'Wonder',     es: 'Asombro',  pron: 'ah-SOHM-broh', def: 'A feeling of surprise and curiosity about something amazing',      img: 'https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?w=300&q=80' }
+      { en: 'Seasons',  es: 'Estaciones', pron: 'ehs-tah-SYOH-nehs', def: 'The four times of year — spring, summer, fall, winter — when trees look different', emoji: '🍂🌸❄️🌻', bg: '#FFF3CD', fg: '#744210' },
+      { en: 'Change',   es: 'Cambio',     pron: 'KAHM-byoh',         def: 'When something becomes different — trees change color, lose leaves, and grow new ones', emoji: '🔄', bg: '#E9D8FD', fg: '#553C9A' },
+      { en: 'Observe',  es: 'Observar',   pron: 'ohb-sehr-BAHR',     def: 'To look carefully and notice things using your eyes, ears, hands, nose, and heart', emoji: '🔍', bg: '#EBF8FF', fg: '#2B6CB0' },
+      { en: 'Compare',  es: 'Comparar',   pron: 'kohm-pah-RAHR',     def: 'To look at two things and find what is the same and what is different', emoji: '⚖️', bg: '#FFF3CD', fg: '#744210' },
+      { en: 'Wonder',   es: 'Asombro',    pron: 'ah-SOHM-broh',      def: 'The amazing feeling of surprise and curiosity when you discover something new', emoji: '✨', bg: '#E9D8FD', fg: '#553C9A' }
     ],
     5: [
-      { en: 'Community',  es: 'Comunidad',pron: 'koh-moo-nee-DAHD', def: 'A group that lives and grows together — like a forest of trees', img: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=300&q=80' },
-      { en: 'Roots',      es: 'Raíces',   pron: 'rah-EE-sehs',  def: 'What holds us — both trees and people — grounded and strong',      img: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=300&q=80' },
-      { en: 'Growth',     es: 'Crecimiento', pron: 'kreh-see-MYEHN-toh', def: 'The process of becoming bigger, stronger, and wiser over time', img: 'https://images.unsplash.com/photo-1508193638397-1c4234db14d8?w=300&q=80' },
-      { en: 'Unique',     es: 'Único',    pron: 'OO-nee-koh',   def: 'One of a kind — every tree, like every child, is beautifully unique', img: 'https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=300&q=80' },
-      { en: 'Connected',  es: 'Conectado',pron: 'koh-nehk-TAH-doh', def: 'Joined together — tree roots and people in a community are connected', img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&q=80' }
+      { en: 'Community',es: 'Comunidad',  pron: 'koh-moo-nee-DAHD',  def: 'A group that lives, grows, and cares for each other — like a forest or our classroom', emoji: '🫂', bg: '#D8F3DC', fg: '#1B4332' },
+      { en: 'Roots',    es: 'Raíces',     pron: 'rah-EE-sehs',       def: 'What holds us grounded and strong — both trees and the people who love us', emoji: '💛', bg: '#FFF3CD', fg: '#774936' },
+      { en: 'Growth',   es: 'Crecimiento',pron: 'kreh-see-MYEHN-toh',def: 'The wonderful process of becoming bigger, stronger, kinder, and wiser over time', emoji: '🌱', bg: '#D8F3DC', fg: '#2D6A4F' },
+      { en: 'Unique',   es: 'Único',      pron: 'OO-nee-koh',        def: 'One of a kind — every tree is different, and every child is beautifully unique', emoji: '⭐', bg: '#FFFBEB', fg: '#744210' },
+      { en: 'Connected',es: 'Conectado',  pron: 'koh-nehk-TAH-doh',  def: 'Joined together and belonging — tree roots connect underground, just as we connect to each other', emoji: '🤝', bg: '#EBF8FF', fg: '#2B6CB0' }
     ]
   };
 
   const words = vocabByWeek[weekNum] || vocabByWeek[1];
   const dayStart = (weekNum - 1) * 5 + 1;
 
-  const renderCard = (w, i) => `
-    <div style="background:white;border:3px solid #1B4332;border-radius:16px;padding:0;overflow:hidden;page-break-inside:avoid;page-break-after:always;break-after:page;font-family:Arial,sans-serif;">
-      <div style="background:#1B4332;color:#D8F3DC;padding:10px 20px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1px;display:flex;justify-content:space-between;">
-        <span>Faithful Foundations · Exploring Trees</span>
-        <span>Day ${dayStart + i} · Week ${weekNum}</span>
-      </div>
-      <img src="${w.img}" alt="${w.en}" style="width:100%;height:220px;object-fit:cover;display:block;" onerror="this.style.display='none'">
-      <div style="padding:24px;">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:16px;">
-          <div>
-            <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#4A5568;font-weight:700;margin-bottom:4px;">English</div>
-            <div style="font-size:36px;font-weight:800;color:#1B4332;font-family:Georgia,serif;">${w.en}</div>
-            <div style="font-size:14px;color:#1A1A2E;margin-top:6px;line-height:1.5;">${w.def}</div>
-          </div>
-          <div style="background:#F0FFF4;border-radius:10px;padding:16px;">
-            <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#2D6A4F;font-weight:700;margin-bottom:4px;">En Español</div>
-            <div style="font-size:32px;font-weight:800;color:#2D6A4F;font-family:Georgia,serif;">${w.es}</div>
-            <div style="font-size:13px;color:#4A5568;margin-top:8px;">Pronunciation for English speakers:</div>
-            <div style="font-size:16px;font-weight:700;color:#1B4332;font-style:italic;margin-top:2px;">${w.pron}</div>
-          </div>
-        </div>
-        <div style="background:#1B4332;color:#D8F3DC;border-radius:8px;padding:10px 16px;font-size:13px;text-align:center;">
-          ✝ <em style="font-style:italic;">God made every living thing — trees, children, and all of creation — wonderfully unique.</em>
-        </div>
-      </div>
-    </div>`;
-
-  const html = '<div style="max-width:700px;margin:0 auto;">' +
-    '<div style="text-align:center;padding:24px;page-break-after:always;break-after:page;border-bottom:3px solid #1B4332;">' +
-    '<div style="font-size:36px;margin-bottom:10px;">📖</div>' +
-    '<h1 style="font-size:24px;color:#1B4332;margin-bottom:8px;">Vocabulary Word Cards</h1>' +
-    '<h2 style="font-size:16px;color:#2D6A4F;margin-bottom:14px;font-weight:400;">Week ' + weekNum + ' · Exploring Trees · Faithful Foundations</h2>' +
-    '<p style="font-size:13px;color:#4A5568;max-width:500px;margin:0 auto;line-height:1.7;">Print one card per day. Display in the classroom at child eye level. Point to the word each morning during Discovery Circle. Practice saying it together in English and Spanish.</p>' +
+  // Digital view card (padded, visible in scrollable panel)
+  const digitalCard = (w, i) =>
+    '<div style="background:white;border:3px solid #1B4332;border-radius:16px;overflow:hidden;margin-bottom:24px;font-family:Arial,sans-serif;">' +
+    '<div style="background:#1B4332;color:#D8F3DC;padding:10px 20px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1px;display:flex;justify-content:space-between;">' +
+    '<span>Faithful Foundations · Exploring Trees</span><span>Day ' + (dayStart + i) + ' · Week ' + weekNum + '</span></div>' +
+    // Emoji illustration block
+    '<div style="background:' + w.bg + ';text-align:center;padding:28px 20px;font-size:80px;line-height:1;">' + w.emoji + '</div>' +
+    '<div style="padding:20px 24px;">' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">' +
+    '<div>' +
+    '<div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#4A5568;font-weight:700;margin-bottom:4px;">English</div>' +
+    '<div style="font-size:32px;font-weight:800;color:' + w.fg + ';font-family:Georgia,serif;">' + w.en + '</div>' +
+    '<div style="font-size:14px;color:#1A1A2E;margin-top:6px;line-height:1.6;">' + w.def + '</div>' +
     '</div>' +
-    words.map((w, i) => renderCard(w, i)).join('') +
+    '<div style="background:' + w.bg + ';border-radius:10px;padding:16px;">' +
+    '<div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#2D6A4F;font-weight:700;margin-bottom:4px;">En Español</div>' +
+    '<div style="font-size:28px;font-weight:800;color:' + w.fg + ';font-family:Georgia,serif;">' + w.es + '</div>' +
+    '<div style="font-size:12px;color:#4A5568;margin-top:8px;font-weight:600;">How to say it (for English speakers):</div>' +
+    '<div style="font-size:17px;font-weight:800;color:#1B4332;font-style:italic;margin-top:3px;letter-spacing:.5px;">' + w.pron + '</div>' +
+    '</div></div>' +
+    '<div style="background:#1B4332;color:#D8F3DC;border-radius:8px;padding:10px 16px;font-size:13px;text-align:center;">' +
+    '✝ <em>God made every living thing — trees, children, and all of creation — wonderfully unique.</em>' +
+    '</div></div></div>';
+
+  const html =
+    '<div style="max-width:680px;margin:0 auto;padding:8px;">' +
+    // Cover page
+    '<div style="text-align:center;padding:28px 20px;margin-bottom:24px;background:#F0FFF4;border:2px solid #1B4332;border-radius:16px;">' +
+    '<div style="font-size:48px;margin-bottom:10px;">📖</div>' +
+    '<h1 style="font-size:22px;color:#1B4332;margin-bottom:6px;">Vocabulary Word Cards</h1>' +
+    '<h2 style="font-size:15px;color:#2D6A4F;margin-bottom:12px;font-weight:400;">Week ' + weekNum + ' · Exploring Trees · Faithful Foundations</h2>' +
+    '<p style="font-size:13px;color:#4A5568;max-width:480px;margin:0 auto;line-height:1.7;">Print one card per day. Display at child eye level. Point to the word each morning during Discovery Circle and say it together in English and Spanish.</p>' +
+    '</div>' +
+    words.map(digitalCard).join('') +
     '</div>';
 
   document.getElementById('printPanel-vocab-content').innerHTML = html;
