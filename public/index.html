@@ -138,18 +138,22 @@
   .print-resource-panel.active { display: block; }
   .print-panel-close { position: fixed; top: 16px; right: 24px; background: var(--green); color: white; border: none; border-radius: 8px; padding: 8px 18px; font-size: 14px; cursor: pointer; font-weight: 700; z-index: 2001; }
   .print-panel-print { position: fixed; top: 16px; right: 150px; background: var(--gold); color: white; border: none; border-radius: 8px; padding: 8px 18px; font-size: 14px; cursor: pointer; font-weight: 700; z-index: 2001; }
-  .cb-center-card { background: #F0FFF4; border: 2px solid var(--green); border-radius: 12px; padding: 24px; margin-bottom: 24px; page-break-inside: avoid; }
+  .cb-center-card { background: #F0FFF4; border: 2px solid var(--green); border-radius: 12px; padding: 24px; margin-bottom: 0; page-break-after: always; break-after: page; }
   .cb-center-name { font-size: 18px; font-weight: 700; color: var(--green); margin-bottom: 6px; }
   .cb-center-week { font-size: 12px; color: var(--text-light); margin-bottom: 14px; }
   .cb-questions { list-style: none; padding: 0; }
   .cb-questions li { padding: 8px 12px 8px 32px; position: relative; border-bottom: 1px solid #C6F6D5; font-size: 14px; line-height: 1.6; }
   .cb-questions li::before { content: "?"; position: absolute; left: 8px; color: var(--green); font-weight: 900; font-size: 16px; }
   .fm-print-card { background: linear-gradient(135deg, #FFF8F0, #FFF3E0); border: 2px solid #F4A261; border-radius: 12px; padding: 24px; margin-bottom: 24px; page-break-inside: avoid; }
+  .fm-print-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; page-break-after: always; break-after: page; margin-bottom: 0; }
+  .fm-print-pair .fm-print-card { margin-bottom: 0; }
   .fm-print-title { font-size: 17px; font-weight: 700; color: #E76F51; margin-bottom: 12px; }
-  .prayer-card { background: linear-gradient(135deg, #F0FFF4, #E8F5E9); border: 2px solid var(--green); border-radius: 12px; padding: 24px; margin-bottom: 20px; page-break-inside: avoid; text-align: center; }
+  .prayer-card { background: linear-gradient(135deg, #F0FFF4, #E8F5E9); border: 2px solid var(--green); border-radius: 12px; padding: 32px 24px; margin-bottom: 0; page-break-after: always; break-after: page; text-align: center; min-height: 60vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
   .prayer-day { font-size: 12px; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
   .prayer-text { font-size: 16px; line-height: 1.8; color: var(--green); font-style: italic; font-weight: 600; }
-  .setup-area-card { background: #EBF8FF; border: 2px solid #90CDF4; border-radius: 12px; padding: 20px; margin-bottom: 20px; page-break-inside: avoid; }
+  .setup-area-card { background: #EBF8FF; border: 2px solid #90CDF4; border-radius: 12px; padding: 20px; margin-bottom: 0; page-break-inside: avoid; }
+  .setup-area-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; page-break-after: always; break-after: page; margin-bottom: 0; }
+  .setup-area-pair .setup-area-card { margin-bottom: 0; }
   .setup-area-name { font-size: 16px; font-weight: 700; color: #2B6CB0; margin-bottom: 8px; }
   @media print { .print-panel-close, .print-panel-print { display: none !important; } }
 
@@ -311,7 +315,7 @@ const AGE_BANDS = [
   { id: 'prek', label: 'Pre-K', sublabel: '4–5 years' }
 ];
 
-const DAY_LABELS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+// Day labels removed — days shown as Day 1, Day 2, etc. (not tied to days of week)
 
 // ============================================================
 // AUTH
@@ -602,34 +606,38 @@ function openCuriosityBuilders(weekNum) {
   ];
 
   const genericQuestions = {
-    'Science & Discovery': ['What do you notice about this?', 'What do you wonder about what you see?', 'What do you think would happen if...?', 'How does this feel/smell/look different from...?', 'What questions do you have about this?'],
-    'Art Studio': ['What are you making? Tell me about it.', 'What do you notice when you mix these colors?', 'How did you decide to make it this way?', 'What would happen if you used more of...?', 'What does this remind you of?'],
-    'Building & Construction': ['What are you building? What will it do?', 'What would make it stronger?', 'What happens if you change this part?', 'How did you figure that out?', 'What do you think would happen if it fell?'],
-    'Literacy & Writing': ['What story does this picture tell you?', 'What do you notice about the letters/words?', 'If you could write anything, what would it say?', 'What do you think happens next in this book?', 'What does this word make you think of?'],
-    'Math & Manipulatives': ['How could you sort these in a different way?', 'How many do you think there are — how could we find out?', 'What pattern do you see?', 'What is the same? What is different?', 'How could you make them equal?'],
-    'Dramatic Play': ['What is happening in your story?', 'What does your character need?', 'How could your character solve that problem?', 'What would happen next in your story?', 'How is your character feeling?'],
-    'Sensory Table': ['What do you notice when you touch it?', 'How does it feel different from...?', 'What do you wonder about what you\'re feeling?', 'What do you think is inside?', 'What happens when you...?'],
-    'Outdoor Exploration': ['What do you notice about this tree/plant/animal?', 'What do you think it needs to live?', 'What changes have you noticed outside?', 'What would happen if...?', 'What does this remind you of from inside the classroom?']
+    'Science & Discovery': ['What do you notice about this?','What do you wonder about what you see?','What do you think would happen if...?','How does this feel, smell, or look different from what you expected?','What questions do you have about this?','If you were a tree, what part would you be? Why?'],
+    'Art Studio': ['What are you making? Tell me about it.','What do you notice when you mix these colors together?','How did you decide to make it this way?','What would happen if you used more of...?','What does this remind you of from our exploration?','How does a tree make you feel? Can you show that in your art?'],
+    'Building & Construction': ['What are you building? What will it do?','What do you think would make it stronger?','What happens if you change this part?','How did you figure that out?','How is your building like a tree?','What part of a tree are you using in your design?'],
+    'Literacy & Writing': ['What story does this picture tell you?','What do you notice about the letters or words?','If you could write anything about trees, what would it say?','What do you think happens next in this book?','What does this word make you think of?','If a tree could talk, what do you think it would say?'],
+    'Math & Manipulatives': ['How could you sort these in a different way?','How many do you think there are — how could we find out?','What pattern do you see?','What is the same? What is different?','How could you make two groups that are equal?','If a tree had 10 leaves and 3 fell, how many are left?'],
+    'Dramatic Play': ['What is happening in your story?','What does your character need right now?','How could your character solve that problem?','What would happen next in your story?','How is your character feeling?','What would an animal who lives in a tree do today?'],
+    'Sensory Table': ['What do you notice when you touch it?','How does this feel different from what you expected?','What do you wonder about what you are feeling?','What do you think you might find if you dig deeper?','What happens when you pour slowly... versus quickly?','What does this remind you of outside?'],
+    'Outdoor Exploration': ['What do you notice about this tree or plant?','What do you think it needs to grow?','What changes have you noticed outside this week?','What would happen if this tree had no leaves?','What does this remind you of from inside the classroom?','I wonder... what did God have in mind when He made this?']
   };
 
-  const html = `<div style="font-family:'Source Sans 3',Arial,sans-serif;max-width:800px;margin:0 auto;">
-    <div style="text-align:center;margin-bottom:32px;border-bottom:3px solid #1B4332;padding-bottom:20px;">
-      <div style="font-size:28px;margin-bottom:6px;">🌱</div>
-      <h1 style="font-size:22px;color:#1B4332;margin-bottom:8px;">Curiosity Builders — Week ${weekNum}</h1>
-      <p style="font-size:13px;color:#4A5568;max-width:560px;margin:0 auto;line-height:1.6;">${CURIOSITY_BUILDERS_INTRO}</p>
-    </div>
-    ${centers.map(c => `
-    <div class="cb-center-card">
-      <div class="cb-center-name">${c.icon} ${c.name}</div>
-      <div class="cb-center-week" style="color:${c.color};">Week ${weekNum} · Exploring Trees · Fruit: Love, Joy, Peace, Patience, Kindness</div>
-      <ul class="cb-questions">
-        <li style="font-weight:700;color:${c.color};">How is a tree like our Circle of Friends?</li>
-        <li>What parts of a tree can you find here?</li>
-        ${(genericQuestions[c.name] || []).map(q => `<li>${q}</li>`).join('')}
-        <li style="font-style:italic;color:#666;">✝ I wonder... what did God have in mind when He made trees?</li>
-      </ul>
-    </div>`).join('')}
-  </div>`;
+  const html = '<div style="font-family:Arial,sans-serif;max-width:720px;margin:0 auto;">' +
+    '<div style="text-align:center;padding:24px;border-bottom:4px solid #1B4332;margin-bottom:0;page-break-after:always;break-after:page;">' +
+    '<div style="font-size:40px;margin-bottom:10px;">🌱</div>' +
+    '<h1 style="font-size:26px;color:#1B4332;margin-bottom:12px;">Curiosity Builders</h1>' +
+    '<h2 style="font-size:18px;color:#2D6A4F;margin-bottom:16px;">Week ' + weekNum + ' — Exploring Trees</h2>' +
+    '<div style="background:#F0FFF4;border:2px solid #52B788;border-radius:10px;padding:20px;text-align:left;max-width:580px;margin:0 auto;">' +
+    '<p style="font-size:13px;color:#1A1A2E;line-height:1.7;margin:0;">' + CURIOSITY_BUILDERS_INTRO + '</p>' +
+    '</div></div>' +
+    centers.map(c =>
+      '<div class="cb-center-card">' +
+      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">' +
+      '<span style="font-size:32px;">' + c.icon + '</span>' +
+      '<div><div class="cb-center-name" style="color:' + c.color + ';">' + c.name + '</div>' +
+      '<div class="cb-center-week" style="color:' + c.color + ';">Week ' + weekNum + ' · Exploring Trees</div></div></div>' +
+      '<div style="background:' + c.color + ';color:white;border-radius:8px;padding:10px 16px;margin-bottom:14px;font-size:13px;font-weight:700;">🌟 Print and post in this area — these questions spark wonder and investigation</div>' +
+      '<ul class="cb-questions">' +
+      '<li style="font-weight:800;color:' + c.color + ';font-size:15px;">How is a tree like our Circle of Friends?</li>' +
+      (genericQuestions[c.name] || []).map(q => '<li style="font-size:14px;">' + q + '</li>').join('') +
+      '<li style="font-style:italic;color:#444;border-top:1px dashed #ccc;margin-top:8px;padding-top:8px;">✝ I wonder... what did God have in mind when He made trees?</li>' +
+      '</ul></div>'
+    ).join('') +
+  '</div>';
 
   document.getElementById('printPanel-cb-content').innerHTML = html;
   document.getElementById('printPanel-cb').classList.add('active');
@@ -637,46 +645,196 @@ function openCuriosityBuilders(weekNum) {
 
 function openFruitfulMoments(weekNum) {
   const moments = [
-    { name: 'Rooted & Growing', steps: ['Stand tall like a tree trunk — feet together, arms at sides.', 'Slowly reach arms up and out like branches growing.', '"We are rooted in love — growing stronger every day!"', 'Wiggle fingers like leaves in the breeze.', 'Say together: "Strong roots, tall tree, that\'s you and that\'s me!"'], use: 'Opening Discovery Circle or any transition' },
-    { name: 'Leaf Counting Chant', steps: ['Hold up both hands, fingers spread wide.', 'Count each finger: "One leaf, two leaves, three leaves, four..."', 'Wave both hands overhead: "...so many leaves, let\'s count some more!"', 'Clap the rhythm together.', 'Repeat 2-3 times, speeding up each round.'], use: 'Transition from Choice Time to Story Gathering' },
-    { name: 'Tree Parts Body Freeze', steps: ['"When I say ROOTS — touch your feet!"', '"When I say TRUNK — wrap your arms around yourself!"', '"When I say BRANCHES — stretch your arms wide!"', '"When I say LEAVES — wiggle your fingers high!"', 'Call out parts in random order, freeze between each one.'], use: 'Transition to Outdoor Time or cleanup signal' },
-    { name: 'Circle of Friends Tree Song', steps: ['Stand in a circle holding hands.', '"We\'re a forest, we\'re a team — strongest when our roots are seen!"', 'Gently sway together left and right.', '"Each one different, each one bright — every tree is just right!"', 'Squeeze hands gently and bow.'], use: 'Closing Reflection Time' },
-    { name: 'Whisper Wonder', steps: ['Come close together in a small circle.', 'Teacher whispers: "I wonder... [today\'s wonder question]"', 'Each child whispers something they wonder to the person next to them.', '"All our wondering — that\'s how we grow!"', 'End with quiet hands on hearts.'], use: 'Heart Moment transition or end of Discovery Circle' }
+    {
+      name: 'Rooted & Growing',
+      type: 'movement',
+      tune: null,
+      use: 'Opening Discovery Circle or any transition',
+      steps: [
+        'Stand tall like a tree trunk — feet together, arms at sides.',
+        'Slowly reach arms up and out like branches growing.',
+        'Say together: "We are rooted in love — growing stronger every day!"',
+        'Wiggle fingers like leaves dancing in the breeze.',
+        'Bring hands to heart: Strong roots, tall tree — that\'s you and that\'s me!'
+      ]
+    },
+    {
+      name: 'The Tree Song',
+      type: 'song',
+      tune: '(Sung to "Twinkle Twinkle Little Star")',
+      use: 'Transition from morning arrival to Discovery Circle',
+      steps: [
+        'Sing together — point to body parts as named:',
+        '"Roots go down and hold us tight, (touch feet)',
+        'Trunk stands up from morning to night, (stand straight)',
+        'Branches reach for sun above, (arms wide)',
+        'Leaves that flutter — full of love! (wiggle fingers)',
+        'Roots and trunk and branch and leaves — (wave whole arms)',
+        'God made every one of these!" (hands on heart)'
+      ]
+    },
+    {
+      name: 'Tree Parts Body Freeze',
+      type: 'movement game',
+      tune: null,
+      use: 'Transition to Outdoor Time or cleanup signal',
+      steps: [
+        '"When I say ROOTS — touch your feet!"',
+        '"When I say TRUNK — wrap your arms around yourself!"',
+        '"When I say BRANCHES — stretch your arms wide!"',
+        '"When I say LEAVES — wiggle your fingers high!"',
+        'Call out tree parts in random order.',
+        'Children freeze in each position until the next word.',
+        'Speed up for excitement — slow down to calm.'
+      ]
+    },
+    {
+      name: 'Circle of Friends Tree Song',
+      type: 'song',
+      tune: '(Sung to "Row Row Row Your Boat")',
+      use: 'Closing Reflection Time or Circle of Friends gathering',
+      steps: [
+        'Stand in a circle holding hands. Sway gently as you sing:',
+        '"Grow, grow, grow a tree, (rise slowly on tiptoes)',
+        'Standing tall and strong, (stretch up)',
+        'Roots go deep and branches spread, (arms wide)',
+        'Every tree belongs!" (squeeze hands gently)',
+        'Second verse:',
+        '"Friends are like the forest, (gesture to the circle)',
+        'Different, yet the same, (look at each person)',
+        'God made each of us unique — (hands on hearts)',
+        'Every one by name! (say each child name around the circle)'
+      ]
+    },
+    {
+      name: 'Whisper Wonder',
+      type: 'quiet ritual',
+      tune: null,
+      use: 'Heart Moment transition or close of Discovery Circle',
+      steps: [
+        'Come close together in a small, quiet huddle.',
+        'Teacher whispers: "I wonder... [todays wonder question]"',
+        'Each child whispers one wonder thought to the person next to them.',
+        'Teacher: "All our wondering... thats how we grow."',
+        'End with quiet hands placed gently on hearts.',
+        'Pause in silence for 5 seconds together.'
+      ]
+    }
   ];
 
-  const html = `<div style="font-family:'Source Sans 3',Arial,sans-serif;max-width:700px;margin:0 auto;">
-    <div style="text-align:center;margin-bottom:28px;border-bottom:3px solid #E76F51;padding-bottom:18px;">
-      <div style="font-size:28px;margin-bottom:6px;">🍎</div>
-      <h1 style="font-size:22px;color:#E76F51;margin-bottom:6px;">Fruitful Moments — Week ${weekNum}</h1>
-      <p style="font-size:12px;color:#4A5568;">Post in the Discovery Circle area. Use for transitions and gatherings throughout each day.</p>
-    </div>
-    ${moments.map((m, i) => `
-    <div class="fm-print-card">
-      <div class="fm-print-title">🍎 ${m.name}</div>
-      <div style="font-size:11px;color:#E76F51;margin-bottom:10px;font-weight:700;">USE FOR: ${m.use}</div>
-      <ol style="padding-left:20px;font-size:14px;line-height:1.8;">
-        ${m.steps.map(s => `<li style="margin-bottom:4px;">${s}</li>`).join('')}
-      </ol>
-    </div>`).join('')}
-  </div>`;
+  // Pair moments for 2-per-page layout
+  const pairs = [];
+  for (let i = 0; i < moments.length; i += 2) {
+    pairs.push(moments.slice(i, i + 2));
+  }
+
+  const renderMoment = m =>
+    '<div class="fm-print-card">' +
+    '<div class="fm-print-title">🍎 ' + m.name + '</div>' +
+    (m.type === 'song' || m.tune ? '<div style="background:#E76F51;color:white;border-radius:6px;padding:5px 12px;display:inline-block;font-size:11px;font-weight:800;margin-bottom:6px;">' + (m.tune || '♪ Song') + '</div>' : '<div style="background:#F4A261;color:white;border-radius:6px;padding:5px 12px;display:inline-block;font-size:11px;font-weight:800;margin-bottom:6px;">' + m.type.toUpperCase() + '</div>') +
+    '<div style="font-size:11px;color:#E76F51;margin-bottom:10px;font-weight:700;">USE FOR: ' + m.use + '</div>' +
+    '<ol style="padding-left:18px;font-size:13px;line-height:1.8;margin:0;">' +
+    m.steps.map(s => '<li style="margin-bottom:3px;">' + s + '</li>').join('') +
+    '</ol></div>';
+
+  const html = '<div style="font-family:Arial,sans-serif;max-width:760px;margin:0 auto;">' +
+    '<div style="text-align:center;padding:20px;border-bottom:3px solid #E76F51;margin-bottom:0;page-break-after:always;break-after:page;">' +
+    '<div style="font-size:36px;margin-bottom:8px;">🍎</div>' +
+    '<h1 style="font-size:22px;color:#E76F51;margin-bottom:6px;">Fruitful Moments — Week ' + weekNum + '</h1>' +
+    '<p style="font-size:12px;color:#4A5568;margin:0;">Print and post in your Discovery Circle area. ♪ = sung to indicated tune. Use for transitions and gatherings.</p>' +
+    '</div>' +
+    pairs.map(pair =>
+      '<div class="fm-print-pair">' +
+      pair.map(renderMoment).join('') +
+      '</div>'
+    ).join('') +
+  '</div>';
 
   document.getElementById('printPanel-fm-content').innerHTML = html;
   document.getElementById('printPanel-fm').classList.add('active');
 }
 
 function openMealtimePrayers(weekNum) {
-  const html = `<div style="font-family:'Source Sans 3',Arial,sans-serif;max-width:600px;margin:0 auto;">
-    <div style="text-align:center;margin-bottom:28px;border-bottom:3px solid #1B4332;padding-bottom:18px;">
-      <div style="font-size:28px;margin-bottom:6px;">🙏</div>
-      <h1 style="font-size:22px;color:#1B4332;margin-bottom:6px;">Mealtime Prayers</h1>
-      <p style="font-size:12px;color:#4A5568;">Print and display in your meal areas. Rotate daily — children learn all five over time.<br>These are gentle, invitational — always offered, never required.</p>
-    </div>
-    ${MEALTIME_PRAYERS_LIST.map((p, i) => `
-    <div class="prayer-card">
-      <div class="prayer-day">${p.days} · Week ${weekNum}</div>
-      <div class="prayer-text">${p.text.replace(/\n/g, '<br>')}</div>
-    </div>`).join('')}
-  </div>`;
+  // One prayer per exploration month - theme-matched with real photo
+  // For Exploring Trees (November/Fall): use a real tree photo from Unsplash
+  const TREE_PHOTO_URL = 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=600&q=80';
+  // ^^ Autumn tree with colorful leaves - perfect for Exploring Trees
+
+  const monthPrayer = {
+    exploration: 'Exploring Trees',
+    month: 'Month',
+    fruit: 'Love, Joy, Peace, Patience, Kindness',
+    title: 'The Tree Prayer',
+    photo_url: TREE_PHOTO_URL,
+    photo_credit: 'Photo: Unsplash',
+    prayer_text: [
+      'Thank You for the roots so deep,',
+      'That hold us safe while were asleep.',
+      'Thank You for the branches wide,',
+      'Where birds and squirrels love to hide.',
+      'Thank You for the leaves so bright,',
+      'That turn to gold in autumn light.',
+      'And thank You for this food today —',
+      'Bless our friends as we work and play.',
+      'Amen.'
+    ],
+    display_note: 'Post near meal area. Recite daily throughout the Exploring Trees curriculum.',
+    gesture_guide: [
+      { line: 'Thank You for the roots so deep,', gesture: 'Touch the floor with both hands' },
+      { line: 'That hold us safe while were asleep.', gesture: 'Hug yourself gently' },
+      { line: 'Thank You for the branches wide,', gesture: 'Stretch arms wide' },
+      { line: 'Where birds and squirrels love to hide.', gesture: 'Peek-a-boo hands over eyes' },
+      { line: 'Thank You for the leaves so bright,', gesture: 'Wiggle fingers like falling leaves' },
+      { line: 'That turn to gold in autumn light.', gesture: 'Sweep arms in an arc overhead' },
+      { line: 'And thank You for this food today —', gesture: 'Gesture to the food on the table' },
+      { line: 'Bless our friends as we work and play.', gesture: 'Point to friends around the table' },
+      { line: 'Amen.', gesture: 'Hands folded, eyes closed, nod' }
+    ]
+  };
+
+  const html = '<div style="font-family:Georgia,serif;max-width:640px;margin:0 auto;">' +
+
+    // DISPLAY POSTER - full page
+    '<div class="prayer-card" style="background:linear-gradient(180deg,#1B4332 0%,#2D6A4F 40%,#1B4332 100%);border:none;border-radius:0;min-height:100vh;padding:0;margin:0;">' +
+      '<img src="' + monthPrayer.photo_url + '" alt="Autumn trees" ' +
+      'style="width:100%;height:300px;object-fit:cover;object-position:center top;" ' +
+      'onerror="this.style.display=\\\'none\\\'">'+
+      '<div style="padding:32px 32px 24px 32px;">' +
+        '<div style="color:#95D5B2;font-size:12px;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;font-family:Arial,sans-serif;">Faithful Foundations · ' + monthPrayer.exploration + '</div>' +
+        '<h1 style="font-size:28px;color:#D8F3DC;margin-bottom:4px;">' + monthPrayer.title + '</h1>' +
+        '<div style="color:#52B788;font-size:13px;margin-bottom:28px;font-family:Arial,sans-serif;">Fruit of the Spirit: ' + monthPrayer.fruit + '</div>' +
+        '<div style="background:rgba(255,255,255,0.1);border-radius:12px;padding:24px;border-left:4px solid #52B788;">' +
+          monthPrayer.prayer_text.map(line =>
+            '<div style="font-size:18px;color:#FFFFFF;line-height:2;font-style:italic;">' + line + '</div>'
+          ).join('') +
+        '</div>' +
+        '<div style="margin-top:20px;font-size:11px;color:#95D5B2;font-family:Arial,sans-serif;">' + monthPrayer.display_note + '</div>' +
+        '<div style="font-size:10px;color:#52B788;margin-top:4px;font-family:Arial,sans-serif;">' + monthPrayer.photo_credit + '</div>' +
+      '</div>' +
+    '</div>' +
+
+    // GESTURE GUIDE - second page
+    '<div style="page-break-before:always;padding:32px;background:#F0FFF4;min-height:60vh;">' +
+      '<div style="text-align:center;margin-bottom:24px;">' +
+        '<div style="font-size:28px;margin-bottom:8px;">🙏</div>' +
+        '<h2 style="font-size:20px;color:#1B4332;margin-bottom:6px;">' + monthPrayer.title + ' — Gesture Guide</h2>' +
+        '<p style="font-size:12px;color:#4A5568;font-family:Arial,sans-serif;">Use these gestures with children during mealtime. Children love the movement — it helps them remember the words!</p>' +
+      '</div>' +
+      '<table style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:13px;">' +
+        '<thead><tr>' +
+          '<th style="background:#1B4332;color:white;padding:10px 14px;text-align:left;border-radius:8px 0 0 0;">Prayer Line</th>' +
+          '<th style="background:#1B4332;color:white;padding:10px 14px;text-align:left;border-radius:0 8px 0 0;">Gesture</th>' +
+        '</tr></thead>' +
+        '<tbody>' +
+          monthPrayer.gesture_guide.map((g, i) =>
+            '<tr style="background:' + (i % 2 === 0 ? '#ffffff' : '#F0FFF4') + ';">' +
+            '<td style="padding:10px 14px;border-bottom:1px solid #C6F6D5;font-style:italic;color:#1B4332;">' + g.line + '</td>' +
+            '<td style="padding:10px 14px;border-bottom:1px solid #C6F6D5;color:#2D6A4F;font-weight:600;">' + g.gesture + '</td>' +
+            '</tr>'
+          ).join('') +
+        '</tbody></table>' +
+    '</div>' +
+  '</div>';
 
   document.getElementById('printPanel-prayers-content').innerHTML = html;
   document.getElementById('printPanel-prayers').classList.add('active');
@@ -684,34 +842,62 @@ function openMealtimePrayers(weekNum) {
 
 function openAreaSetup(weekNum) {
   const areas = [
-    { name: 'Science & Discovery', icon: '🔬', materials: ['Magnifying glasses (1 per child)', 'Tree bark rubbings paper + crayons', 'Leaves of varying sizes and shapes', 'A section of real tree branch', 'Soil samples in small trays', 'Tree identification cards (laminated)', 'Clipboards and simple recording sheets'], setup: 'Arrange materials at center table or shelf. Place branch piece centrally. Have magnifiers available at each spot. Post Curiosity Builders card at child eye level.' },
-    { name: 'Art Studio', icon: '🎨', materials: ['Green, brown, and earth-tone paint (tempera)', 'Leaf sponges and real leaves for printing', 'Large paper for class mural', 'Collage materials (bark, seeds, torn paper)', 'Tree journal pages for individual use', 'Markers and colored pencils'], setup: 'Cover table with butcher paper. Set paint in trays with sponges. Display a leaf print example at center. Place individual journals in a basket.' },
-    { name: 'Building & Construction', icon: '🏗️', materials: ['Unit blocks and large cardboard tubes', 'Small world figures (animals, people)', 'Green foam/fabric for "leaves"', 'Brown construction paper for trunks', 'String and tape', 'Forest scene backdrop (optional)'], setup: 'Clear floor space for large building. Set out materials in open bins. Display a simple tree diagram for inspiration. Leave space for child-created forests.' },
-    { name: 'Dramatic Play', icon: '🎭', materials: ['Tree costume elements (leaf headbands)', 'Woodland animal puppets', 'Acorn and leaf props', 'Forest animal books and cards', 'Recording "log" (notebook)', '"Tree house" prop corner'], setup: 'Create a "forest corner" with fabric or paper trees. Place props in accessible baskets. Post the scenario starter: "You are animals who live in a tree..."' },
-    { name: 'Sensory Table', icon: '✋', materials: ['Soil or kinetic sand', 'Small stones, pebbles, and bark pieces', 'Plastic tree and animal figures', 'Measuring cups and scoops', 'Small shovels/trowels', 'Water source if doing wet sensory'], setup: 'Fill table with soil mixture. Bury small items for discovery. Set tools at side. Post a "What do you notice?" prompt card.' }
+    {
+      name: 'Science & Discovery', icon: '🔬', color: '#2D6A4F',
+      materials: ['Magnifying glasses (1 per child)','Tree bark rubbing paper + crayons','Leaves of varying sizes and shapes','A section of real tree branch','Soil samples in small clear trays','Tree identification cards (laminated)','Clipboards and simple recording sheets'],
+      setup: 'Arrange materials on center table or low shelf. Place the branch piece centrally where children can touch and examine it. Set magnifiers at each spot. Post Curiosity Builders card at child eye level on the wall or table.'
+    },
+    {
+      name: 'Art Studio', icon: '🎨', color: '#E76F51',
+      materials: ['Green, brown, and earth-tone tempera paint','Leaf sponges and real leaves for printing','Large paper for class tree mural','Collage materials (bark pieces, seeds, torn paper)','Tree Journal pages for individual use','Markers and colored pencils','Smocks or paint shirts'],
+      setup: 'Cover table with butcher paper. Set paint in shallow trays with sponges. Display a leaf print example at eye level. Place individual Tree Journals in a basket. Class mural paper can go on wall or a large table.'
+    },
+    {
+      name: 'Building & Construction', icon: '🏗️', color: '#2B6CB0',
+      materials: ['Unit blocks and large cardboard tubes','Small world figures (woodland animals, people)','Green foam or fabric pieces for "leaves"','Brown construction paper for trunks','String, tape, and cardboard base pieces','Simple blueprint cards showing tree buildings'],
+      setup: 'Clear floor space for large building. Set out materials in open labeled bins. Post a simple tree diagram for building inspiration. Leave space for child-created forests. No right or wrong — wonder is the goal.'
+    },
+    {
+      name: 'Dramatic Play', icon: '🎭', color: '#774936',
+      materials: ['Leaf headbands (make from paper)','Woodland animal puppets','Acorn, pinecone, and leaf props','Forest animal books and picture cards','"Tree house" corner setup (fabric, a box)','Simple recording log / nature journal'],
+      setup: 'Create a "forest corner" with draped green fabric or paper trees. Place props in open baskets. Post the scenario starter: "You are animals who live in a tree — what do you need today?"'
+    },
+    {
+      name: 'Sensory Table', icon: '✋', color: '#40916C',
+      materials: ['Soil or kinetic sand base','Small stones, pebbles, and bark pieces','Plastic tree and woodland animal figures','Measuring cups and scoops','Small shovels and trowels','Optional: water in a separate tray for wet play'],
+      setup: 'Fill table with soil/sand mixture. Partially bury small items for discovery play. Set tools at the side in a cup. Post a "What do you notice?" card. Lay down a floor mat for easy cleanup.'
+    },
+    {
+      name: 'Literacy & Writing', icon: '📚', color: '#553C9A',
+      materials: ['Tree-themed books at multiple reading levels','My Tree Journal (individual books)','Tree vocabulary word cards (with illustrations)','Letter cards and simple word-building sets','Writing paper with tree-border template','Pencils, crayons, and fine-tip markers'],
+      setup: 'Set up a cozy reading nook with books displayed cover-out. Word cards go in a small basket. Journal pages are ready to draw/write. Post this week\'s vocabulary word at child eye level.'
+    }
   ];
 
-  const html = `<div style="font-family:'Source Sans 3',Arial,sans-serif;max-width:720px;margin:0 auto;">
-    <div style="text-align:center;margin-bottom:28px;border-bottom:3px solid #2B6CB0;padding-bottom:18px;">
-      <div style="font-size:28px;margin-bottom:6px;">🎨</div>
-      <h1 style="font-size:22px;color:#2B6CB0;margin-bottom:6px;">Choice Time Area Setup — Week ${weekNum}</h1>
-      <p style="font-size:12px;color:#4A5568;">Prepare all areas before children arrive. Materials listed support the full week — refresh as needed daily.</p>
-    </div>
-    ${areas.map(a => `
-    <div class="setup-area-card">
-      <div class="setup-area-name">${a.icon} ${a.name}</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;font-size:13px;line-height:1.7;">
-        <div>
-          <strong style="color:#2B6CB0;display:block;margin-bottom:6px;">Materials Needed</strong>
-          <ul style="padding-left:18px;margin:0;">${a.materials.map(m => `<li>${m}</li>`).join('')}</ul>
-        </div>
-        <div>
-          <strong style="color:#2B6CB0;display:block;margin-bottom:6px;">Setup Instructions</strong>
-          <p style="margin:0;">${a.setup}</p>
-        </div>
-      </div>
-    </div>`).join('')}
-  </div>`;
+  // Pair areas for 2-per-page layout
+  const pairs = [];
+  for (let i = 0; i < areas.length; i += 2) pairs.push(areas.slice(i, i + 2));
+
+  const renderArea = a =>
+    '<div class="setup-area-card">' +
+    '<div class="setup-area-name" style="color:' + a.color + ';">' + a.icon + ' ' + a.name + '</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:12px;line-height:1.7;">' +
+    '<div><strong style="color:' + a.color + ';display:block;margin-bottom:5px;font-size:12px;text-transform:uppercase;letter-spacing:.5px;">Materials Needed</strong>' +
+    '<ul style="padding-left:14px;margin:0;">' + a.materials.map(m => '<li>' + m + '</li>').join('') + '</ul></div>' +
+    '<div><strong style="color:' + a.color + ';display:block;margin-bottom:5px;font-size:12px;text-transform:uppercase;letter-spacing:.5px;">Setup Instructions</strong>' +
+    '<p style="margin:0;">' + a.setup + '</p></div>' +
+    '</div></div>';
+
+  const html = '<div style="font-family:Arial,sans-serif;max-width:760px;margin:0 auto;">' +
+    '<div style="text-align:center;padding:20px;border-bottom:3px solid #2B6CB0;page-break-after:always;break-after:page;">' +
+    '<div style="font-size:32px;margin-bottom:8px;">🎨</div>' +
+    '<h1 style="font-size:22px;color:#2B6CB0;margin-bottom:6px;">Choice Time Area Setup — Week ' + weekNum + '</h1>' +
+    '<p style="font-size:12px;color:#4A5568;">Prepare all areas before children arrive. Print Curiosity Builders separately and post in each center.</p>' +
+    '</div>' +
+    pairs.map(pair =>
+      '<div class="setup-area-pair">' + pair.map(renderArea).join('') + '</div>'
+    ).join('') +
+  '</div>';
 
   document.getElementById('printPanel-setup-content').innerHTML = html;
   document.getElementById('printPanel-setup').classList.add('active');
