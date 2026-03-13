@@ -457,6 +457,9 @@ function renderWeeklyGrid(weekLessons) {
 // LESSON VIEWER
 // ============================================================
 async function openLesson(id) {
+  // Open the beautiful rendered lesson viewer in a new tab
+  window.open('/lesson/' + id, '_blank');
+  return;
   const res = await fetch(`/api/lessons/${id}`);
   currentLesson = await res.json();
   renderLesson();
