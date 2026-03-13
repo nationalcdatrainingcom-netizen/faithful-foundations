@@ -8,15 +8,12 @@ function requireAuth(req, res, next) {
   next();
 }
 
-// ============================================================
-// BOOK COVER — Open Library
-// ============================================================
+// ── BOOK COVER ──
 async function fetchBookCover(title, author) {
   try {
     const q = encodeURIComponent((title || '') + ' ' + (author || ''));
     const res = await fetch('https://openlibrary.org/search.json?q=' + q + '&limit=3');
     const data = await res.json();
-    // Pick first result that has a cover
     if (data.docs) {
       for (const doc of data.docs) {
         if (doc.cover_i) return 'https://covers.openlibrary.org/b/id/' + doc.cover_i + '-M.jpg';
@@ -26,121 +23,61 @@ async function fetchBookCover(title, author) {
   return null;
 }
 
-// ============================================================
-// TREE DIAGRAM — SVG (no external photo dependency, always accurate)
-// Shows roots underground, trunk, branches, leaves — clearly labeled
-// ============================================================
-const TREE_PHOTO_HTML = `
-<div style="text-align:center;">
-  <svg viewBox="0 0 520 400" xmlns="http://www.w3.org/2000/svg" style="max-width:500px;width:100%;border-radius:12px;">
-    <!-- Sky -->
-    <rect width="520" height="245" fill="#D6EEFF" rx="12"/>
-    <!-- Sun -->
-    <circle cx="460" cy="50" r="32" fill="#FFD93D" opacity="0.9"/>
-    <line x1="460" y1="10" x2="460" y2="2" stroke="#FFD93D" stroke-width="3"/>
-    <line x1="492" y1="50" x2="500" y2="50" stroke="#FFD93D" stroke-width="3"/>
-    <line x1="483" y1="23" x2="489" y2="17" stroke="#FFD93D" stroke-width="3"/>
-    <line x1="437" y1="23" x2="431" y2="17" stroke="#FFD93D" stroke-width="3"/>
-    <!-- Ground stripe -->
-    <rect y="245" width="520" height="20" fill="#5D8A3C" rx="0"/>
-    <!-- Underground -->
-    <rect y="265" width="520" height="135" fill="#8B6914" rx="0"/>
-    <!-- Soil texture lines -->
-    <line x1="0" y1="290" x2="520" y2="290" stroke="#7A5C10" stroke-width="1" opacity="0.5"/>
-    <line x1="0" y1="320" x2="520" y2="320" stroke="#7A5C10" stroke-width="1" opacity="0.5"/>
-    <line x1="0" y1="350" x2="520" y2="350" stroke="#7A5C10" stroke-width="1" opacity="0.5"/>
-    <!-- Underground label -->
-    <text x="30" y="285" fill="#C9A84C" font-family="Arial,sans-serif" font-size="11" font-weight="700" opacity="0.8">underground</text>
-    <!-- ROOTS -->
-    <path d="M248,268 Q210,285 185,310" stroke="#6B4226" stroke-width="10" fill="none" stroke-linecap="round"/>
-    <path d="M258,268 Q255,295 252,325" stroke="#6B4226" stroke-width="9" fill="none" stroke-linecap="round"/>
-    <path d="M268,268 Q305,285 330,310" stroke="#6B4226" stroke-width="10" fill="none" stroke-linecap="round"/>
-    <path d="M243,278 Q205,300 178,332" stroke="#7D4F2A" stroke-width="6" fill="none" stroke-linecap="round"/>
-    <path d="M273,278 Q312,300 338,332" stroke="#7D4F2A" stroke-width="6" fill="none" stroke-linecap="round"/>
-    <path d="M252,285 Q235,310 230,345" stroke="#7D4F2A" stroke-width="5" fill="none" stroke-linecap="round"/>
-    <path d="M265,285 Q280,310 285,345" stroke="#7D4F2A" stroke-width="5" fill="none" stroke-linecap="round"/>
-    <!-- TRUNK -->
-    <rect x="234" y="155" width="50" height="115" rx="8" fill="#6B4226"/>
-    <rect x="240" y="160" width="10" height="105" rx="4" fill="#7D4F2A" opacity="0.45"/>
-    <!-- BRANCHES -->
-    <path d="M258,162 Q218,130 175,95" stroke="#5A3519" stroke-width="16" fill="none" stroke-linecap="round"/>
-    <path d="M260,162 Q300,118 345,90" stroke="#5A3519" stroke-width="14" fill="none" stroke-linecap="round"/>
-    <path d="M255,178 Q238,148 220,118" stroke="#5A3519" stroke-width="10" fill="none" stroke-linecap="round"/>
-    <path d="M263,178 Q282,145 305,125" stroke="#5A3519" stroke-width="10" fill="none" stroke-linecap="round"/>
-    <path d="M255,192 Q225,175 195,165" stroke="#5A3519" stroke-width="8" fill="none" stroke-linecap="round"/>
-    <path d="M263,192 Q298,172 325,165" stroke="#5A3519" stroke-width="8" fill="none" stroke-linecap="round"/>
-    <!-- CANOPY / LEAVES -->
-    <ellipse cx="215" cy="78" rx="55" ry="42" fill="#2D6A4F" opacity="0.92"/>
-    <ellipse cx="295" cy="72" rx="52" ry="40" fill="#2D6A4F" opacity="0.92"/>
-    <ellipse cx="258" cy="60" rx="50" ry="38" fill="#40916C"/>
-    <ellipse cx="185" cy="110" rx="38" ry="28" fill="#2D6A4F" opacity="0.88"/>
-    <ellipse cx="330" cy="108" rx="36" ry="26" fill="#2D6A4F" opacity="0.88"/>
-    <ellipse cx="258" cy="50" rx="32" ry="25" fill="#52B788"/>
-    <ellipse cx="180" cy="62" rx="14" ry="10" fill="#52B788" transform="rotate(-25 180 62)"/>
-    <ellipse cx="338" cy="60" rx="14" ry="10" fill="#52B788" transform="rotate(20 338 60)"/>
-    <ellipse cx="228" cy="42" rx="12" ry="8" fill="#74C69D" transform="rotate(-15 228 42)"/>
-    <ellipse cx="292" cy="44" rx="12" ry="8" fill="#74C69D" transform="rotate(15 292 44)"/>
-    <!-- ── LABELS ── -->
-    <!-- Leaves -->
-    <line x1="345" y1="68" x2="385" y2="48" stroke="#1B4332" stroke-width="1.5"/>
-    <rect x="385" y="32" width="78" height="26" rx="13" fill="rgba(27,67,50,0.92)"/>
-    <text x="424" y="49" fill="#D8F3DC" font-family="Arial,sans-serif" font-size="13" font-weight="800" text-anchor="middle">🌿 Leaves</text>
-    <!-- Branches -->
-    <line x1="328" y1="115" x2="375" y2="108" stroke="#5A3519" stroke-width="1.5"/>
-    <rect x="375" y="94" width="105" height="26" rx="13" fill="rgba(90,53,25,0.92)"/>
-    <text x="427" y="111" fill="#F7E6D3" font-family="Arial,sans-serif" font-size="13" font-weight="800" text-anchor="middle">🌲 Branches</text>
-    <!-- Trunk -->
-    <line x1="233" y1="210" x2="165" y2="216" stroke="#6B4226" stroke-width="1.5"/>
-    <rect x="70" y="202" width="94" height="26" rx="13" fill="rgba(107,66,38,0.92)"/>
-    <text x="117" y="219" fill="#F7E6D3" font-family="Arial,sans-serif" font-size="13" font-weight="800" text-anchor="middle">🪵 Trunk</text>
-    <!-- Ground line -->
-    <line x1="258" y1="245" x2="258" y2="260" stroke="#5D8A3C" stroke-width="2" stroke-dasharray="4,3"/>
-    <!-- Roots -->
-    <line x1="200" y1="308" x2="140" y2="318" stroke="#C9A84C" stroke-width="1.5"/>
-    <rect x="32" y="305" width="106" height="26" rx="13" fill="rgba(27,67,50,0.92)"/>
-    <text x="85" y="322" fill="#D8F3DC" font-family="Arial,sans-serif" font-size="13" font-weight="800" text-anchor="middle">🌱 Roots</text>
-    <text x="85" y="336" fill="#C9A84C" font-family="Arial,sans-serif" font-size="10" text-anchor="middle">(underground)</text>
-  </svg>
-  <p style="font-size:12px;color:#4A5568;margin-top:6px;font-style:italic;">Point to each part and name it together with the children</p>
-</div>`;
+// ── TREE DIAGRAM (SVG — always accurate, no photo dependency) ──
+const TREE_SVG = `<svg viewBox="0 0 520 400" xmlns="http://www.w3.org/2000/svg" style="max-width:480px;width:100%;border-radius:12px;display:block;margin:0 auto;">
+  <rect width="520" height="245" fill="#D6EEFF" rx="12"/>
+  <circle cx="460" cy="50" r="30" fill="#FFD93D" opacity="0.9"/>
+  <rect y="245" width="520" height="20" fill="#5D8A3C"/>
+  <rect y="265" width="520" height="135" fill="#8B6914" rx="0"/>
+  <line x1="0" y1="295" x2="520" y2="295" stroke="#7A5C10" stroke-width="1" opacity="0.4"/>
+  <line x1="0" y1="330" x2="520" y2="330" stroke="#7A5C10" stroke-width="1" opacity="0.4"/>
+  <text x="28" y="282" fill="#C9A84C" font-family="Arial,sans-serif" font-size="11" font-weight="700" opacity="0.9">underground</text>
+  <path d="M248,268 Q210,285 185,315" stroke="#6B4226" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <path d="M258,268 Q255,298 252,330" stroke="#6B4226" stroke-width="9" fill="none" stroke-linecap="round"/>
+  <path d="M268,268 Q305,285 330,315" stroke="#6B4226" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <path d="M243,280 Q205,305 175,340" stroke="#7D4F2A" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <path d="M273,280 Q312,305 342,340" stroke="#7D4F2A" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <rect x="234" y="155" width="50" height="112" rx="8" fill="#6B4226"/>
+  <rect x="240" y="160" width="10" height="100" rx="4" fill="#7D4F2A" opacity="0.4"/>
+  <path d="M258,162 Q218,128 175,94" stroke="#5A3519" stroke-width="16" fill="none" stroke-linecap="round"/>
+  <path d="M260,162 Q300,118 345,90" stroke="#5A3519" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <path d="M255,178 Q238,148 220,118" stroke="#5A3519" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <path d="M263,178 Q282,145 305,125" stroke="#5A3519" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <path d="M255,192 Q225,175 195,165" stroke="#5A3519" stroke-width="8" fill="none" stroke-linecap="round"/>
+  <path d="M263,192 Q298,172 325,165" stroke="#5A3519" stroke-width="8" fill="none" stroke-linecap="round"/>
+  <ellipse cx="215" cy="78" rx="55" ry="42" fill="#2D6A4F" opacity="0.92"/>
+  <ellipse cx="295" cy="72" rx="52" ry="40" fill="#2D6A4F" opacity="0.92"/>
+  <ellipse cx="258" cy="60" rx="50" ry="38" fill="#40916C"/>
+  <ellipse cx="185" cy="110" rx="38" ry="28" fill="#2D6A4F" opacity="0.88"/>
+  <ellipse cx="330" cy="108" rx="36" ry="26" fill="#2D6A4F" opacity="0.88"/>
+  <ellipse cx="258" cy="50" rx="32" ry="25" fill="#52B788"/>
+  <ellipse cx="180" cy="62" rx="14" ry="10" fill="#52B788" transform="rotate(-25 180 62)"/>
+  <ellipse cx="338" cy="60" rx="14" ry="10" fill="#52B788" transform="rotate(20 338 60)"/>
+  <line x1="345" y1="68" x2="388" y2="46" stroke="#1B4332" stroke-width="1.5"/>
+  <rect x="388" y="30" width="80" height="26" rx="13" fill="rgba(27,67,50,0.92)"/>
+  <text x="428" y="47" fill="#D8F3DC" font-family="Arial,sans-serif" font-size="13" font-weight="800" text-anchor="middle">🌿 Leaves</text>
+  <line x1="326" y1="118" x2="376" y2="110" stroke="#5A3519" stroke-width="1.5"/>
+  <rect x="376" y="96" width="112" height="26" rx="13" fill="rgba(90,53,25,0.92)"/>
+  <text x="432" y="113" fill="#F7E6D3" font-family="Arial,sans-serif" font-size="13" font-weight="800" text-anchor="middle">🌲 Branches</text>
+  <line x1="233" y1="212" x2="162" y2="218" stroke="#6B4226" stroke-width="1.5"/>
+  <rect x="66" y="204" width="94" height="26" rx="13" fill="rgba(107,66,38,0.92)"/>
+  <text x="113" y="221" fill="#F7E6D3" font-family="Arial,sans-serif" font-size="13" font-weight="800" text-anchor="middle">🪵 Trunk</text>
+  <line x1="202" y1="312" x2="140" y2="322" stroke="#C9A84C" stroke-width="1.5"/>
+  <rect x="30" y="308" width="108" height="26" rx="13" fill="rgba(27,67,50,0.92)"/>
+  <text x="84" y="325" fill="#D8F3DC" font-family="Arial,sans-serif" font-size="13" font-weight="800" text-anchor="middle">🌱 Roots</text>
+  <text x="84" y="340" fill="#C9A84C" font-family="Arial,sans-serif" font-size="10" text-anchor="middle">(underground)</text>
+</svg>`;
 
-// ============================================================
-// MARKDOWN → HTML (server-side)
-// ============================================================
-function md2html(text) {
-  if (!text) return '';
-  return text
-    .replace(/\*\*TEACHER:\*\*\s*/g, '<span class="speaker teacher-sp">TEACHER</span> ')
-    .replace(/\*\*CHILDREN:\*\*\s*/g, '<span class="speaker children-sp">CHILDREN</span> ')
-    .replace(/\*\*([A-Z][A-Z]+):\*\*\s*/g, '<span class="speaker child-sp">$1</span> ')
-    .replace(/\*\*(STEP \d+[^*]*)\*\*/g, '<div class="step-hd">$1</div>')
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/g, '<em class="stage">$1</em>')
-    .replace(/^- (.+)$/gm, '<li>$1</li>')
-    .replace(/^\d+\. (.+)$/gm, '<li class="num">$1</li>')
-    .replace(/(<li[^>]*>.*<\/li>\n?)+/g, m => '<ul>' + m + '</ul>')
-    .replace(/^### (.+)$/gm, '<h3 class="sub-hd">$1</h3>')
-    .replace(/^#### (.+)$/gm, '<h4 class="sub-sub-hd">$1</h4>')
-    .replace(/^---$/gm, '<hr class="inner-hr">')
-    .split('\n\n').map(p => {
-      p = p.trim();
-      if (!p) return '';
-      if (p.startsWith('<')) return p;
-      return '<p>' + p + '</p>';
-    }).join('\n');
-}
-
-// ============================================================
-// CONTENT PARSERS
-// ============================================================
+// ── SECTION PARSER ──
 function parseLessonSections(markdown) {
   const sections = {};
   let current = null;
   let buffer = [];
-  for (const line of markdown.split('\n')) {
+  for (const line of (markdown || '').split('\n')) {
     if (line.startsWith('## ')) {
       if (current) sections[current] = buffer.join('\n');
-      current = line.slice(3).replace(/^\d+\.\s*/, '').trim().toUpperCase();
+      // Strip leading number like "1. " or "1. "
+      current = line.slice(3).replace(/^\d+[\.\)]\s*/, '').trim().toUpperCase();
       buffer = [];
     } else {
       buffer.push(line);
@@ -150,43 +87,95 @@ function parseLessonSections(markdown) {
   return sections;
 }
 
+// Flexible section lookup — handles name variations
+function getSection(sections, ...candidates) {
+  for (const key of candidates) {
+    const up = key.toUpperCase();
+    // Exact match
+    if (sections[up]) return sections[up];
+    // Partial match
+    const found = Object.keys(sections).find(k => k.includes(up) || up.includes(k));
+    if (found) return sections[found];
+  }
+  return '';
+}
+
+// ── MD → HTML (server-side) ──
+function md2html(text) {
+  if (!text) return '';
+  return text
+    .replace(/\*\*TEACHER:\*\*\s*/g, '<span class="sp-teacher">TEACHER</span> ')
+    .replace(/\*\*CHILDREN:\*\*\s*/g, '<span class="sp-children">CHILDREN</span> ')
+    .replace(/\*\*([A-Z][A-Z ]+):\*\*\s*/g, '<span class="sp-child">$1</span> ')
+    .replace(/\*\*(STEP \d+[^*]*)\*\*/g, '<div class="step-hd">$1</div>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em class="stage">$1</em>')
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
+    .replace(/^\d+\. (.+)$/gm, '<li class="num">$1</li>')
+    .replace(/(<li[^>]*>[\s\S]*?<\/li>\n?)+/g, m => '<ul>' + m + '</ul>')
+    .replace(/^### (.+)$/gm, '<h3 class="sub-hd">$1</h3>')
+    .replace(/^#### (.+)$/gm, '<h4 class="sub-sub-hd">$1</h4>')
+    .replace(/^\|(.+)\|$/gm, (m, row) => {
+      const cells = row.split('|').map(c => c.trim());
+      if (cells.every(c => c.match(/^[-:]+$/))) return '';
+      return '<tr>' + cells.map(c => '<td>' + c + '</td>').join('') + '</tr>';
+    })
+    .replace(/(<tr>[\s\S]*?<\/tr>\n?)+/g, m => '<table class="tbl"><tbody>' + m + '</tbody></table>')
+    .replace(/^---$/gm, '<hr class="inner-hr">')
+    .split('\n\n').map(p => {
+      p = p.trim();
+      if (!p) return '';
+      if (p.startsWith('<')) return p;
+      return '<p>' + p + '</p>';
+    }).join('\n');
+}
+
+// ── EXTRACT FRUITFUL MOMENTS ──
 function extractFruitfulMoments(content) {
   const moments = [];
-  const lines = content.split('\n');
+  const lines = (content || '').split('\n');
   let inFM = false, fmTitle = '', fmLines = [];
   for (const line of lines) {
-    const isFM = line.match(/\*\*FRUITFUL MOMENT[^*]*\*\*/i) || line.match(/^#{1,4}\s*FRUITFUL MOMENT/i);
+    const isFM = line.match(/\*\*FRUITFUL MOMENT[^*]*\*\*/i) ||
+                 line.match(/^#{1,4}\s*FRUITFUL MOMENT/i) ||
+                 line.match(/^FRUITFUL MOMENT\s*[:—]/i);
     if (isFM) {
-      if (inFM && fmLines.length) moments.push({ title: fmTitle, content: fmLines.join('\n') });
+      if (inFM && fmLines.length) moments.push({ title: fmTitle, content: fmLines.join('\n').trim() });
       fmTitle = line.replace(/\*\*/g, '').replace(/^#+\s*/, '').trim();
       fmLines = []; inFM = true;
     } else if (inFM) {
-      if (line.match(/^## /)) { moments.push({ title: fmTitle, content: fmLines.join('\n') }); inFM = false; fmLines = []; }
-      else fmLines.push(line);
+      if (line.match(/^## /)) {
+        moments.push({ title: fmTitle, content: fmLines.join('\n').trim() });
+        inFM = false; fmLines = [];
+      } else {
+        fmLines.push(line);
+      }
     }
   }
-  if (inFM && fmLines.length) moments.push({ title: fmTitle, content: fmLines.join('\n') });
+  if (inFM && fmLines.length) moments.push({ title: fmTitle, content: fmLines.join('\n').trim() });
   return moments;
 }
 
+// ── EXTRACT STORY PARTS ──
 function extractStoryParts(storyText) {
   const parts = { before: '', during: '', after: '', full: storyText || '' };
   if (!storyText) return parts;
   const lines = storyText.split('\n');
   let cur = null;
   for (const line of lines) {
-    const low = line.toLowerCase().replace(/[*#_]/g, '');
-    if (low.match(/before\s+reading/)) { cur = 'before'; continue; }
-    else if (low.match(/during\s+reading/)) { cur = 'during'; continue; }
-    else if (low.match(/after\s+reading/)) { cur = 'after'; continue; }
-    if (cur) parts[cur] += line + '\n';
+    const low = line.toLowerCase().replace(/[*#_\s]/g, '');
+    if (low.match(/beforereading/)) { cur = 'before'; continue; }
+    else if (low.match(/duringreading/)) { cur = 'during'; continue; }
+    else if (low.match(/afterreading/)) { cur = 'after'; continue; }
+    if (cur !== null) parts[cur] += line + '\n';
   }
   return parts;
 }
 
+// ── EXTRACT DOC EXAMPLES ──
 function extractDocExamples(content) {
   const examples = [];
-  const lines = content.split('\n');
+  const lines = (content || '').split('\n');
   let inEx = false, exTitle = '', exLines = [];
   for (const line of lines) {
     if (line.match(/CIRCLE OF FRIENDS SCENARIO|DOCUMENTATION EXAMPLE/i)) {
@@ -202,74 +191,85 @@ function extractDocExamples(content) {
   return examples;
 }
 
-// Build a meaningful family connection summary from lesson content
+// ── BUILD FAMILY CONNECTION ──
 function buildFamilyConnection(lesson, sections) {
+  const reflText = getSection(sections, 'REFLECTION TIME', '9. REFLECTION TIME');
+  const fcMatch = reflText.match(/FAMILY CONNECTION([\s\S]{40,}?)(?=\n##|\n\*\*[A-Z]{4}|$)/i);
+  if (fcMatch && fcMatch[1] && fcMatch[1].trim().length > 40) return fcMatch[1].trim();
+
   const focus = lesson.focus || 'trees';
   const vocab = lesson.vocabulary_word || '';
   const fruit = lesson.fruit_of_spirit || 'kindness';
   const dayNum = lesson.day_number || 1;
-
-  // Try to extract from generated content first
-  const reflText = sections['REFLECTION TIME'] || sections['9. REFLECTION TIME'] || '';
-  const fcMatch = reflText.match(/FAMILY CONNECTION([\s\S]*?)(?=\n##|\n\*\*[A-Z]{4,}|$)/i);
-  if (fcMatch && fcMatch[1] && fcMatch[1].trim().length > 40) {
-    return fcMatch[1].trim();
-  }
-
-  // Build a rich summary if not found in content
-  return `Today in Faithful Foundations we explored **"${focus}"** as part of our Exploring Trees study (Day ${dayNum}).\n\n` +
+  return `Today in **Faithful Foundations** we explored **"${focus}"** — Day ${dayNum} of our Exploring Trees study.\n\n` +
     `**What we did today:**\n` +
-    `- Gathered in our Discovery Circle to wonder and investigate together\n` +
-    `- Learned a new vocabulary word: **${vocab}**\n` +
+    `- Gathered in Discovery Circle to wonder and investigate together\n` +
+    `- Learned our vocabulary word: **${vocab}**\n` +
     `- Read a book and talked about what we discovered\n` +
     `- Explored through hands-on Choice Time activities\n` +
-    `- Practiced being kind to our Circle of Friends outdoors\n\n` +
-    `**Our Fruit of the Spirit this week is: ${fruit}**\n\n` +
-    `**Ask your child today:**\n` +
-    `"What did you discover about trees today? What surprised you the most?"`;
+    `- Practiced **${fruit}** with our Circle of Friends\n\n` +
+    `**Ask your child:** "What did you discover about trees today? What surprised you the most?"`;
 }
 
-// Spanish pronunciation helper
-function spanishPronunciation(word) {
+// ── SPANISH PRONUNCIATION LOOKUP ──
+function spanishPron(word) {
   const map = {
-    'arbol': 'AHR-bol', 'árbol': 'AHR-bol',
-    'raiz': 'rah-EES', 'raíz': 'rah-EES',
-    'hoja': 'OH-hah', 'hojas': 'OH-hahs',
-    'rama': 'RAH-mah', 'ramas': 'RAH-mahs',
-    'tronco': 'TROHN-koh',
-    'semilla': 'seh-MEE-yah',
-    'fruta': 'FROO-tah',
-    'bosque': 'BOHS-keh',
-    'tierra': 'TYEH-rah',
-    'agua': 'AH-gwah',
-    'sol': 'sohl',
-    'verde': 'BEHR-deh',
-    'grande': 'GRAHN-deh',
-    'pequeno': 'peh-KEH-nyoh', 'pequeño': 'peh-KEH-nyoh',
+    'arbol':'AHR-bol','árbol':'AHR-bol','raiz':'rah-EES','raíz':'rah-EES',
+    'raices':'rah-EE-sehs','raíces':'rah-EE-sehs','hoja':'OH-hah','hojas':'OH-hahs',
+    'rama':'RAH-mah','ramas':'RAH-mahs','tronco':'TROHN-koh','semilla':'seh-MEE-yah',
+    'semillas':'seh-MEE-yahs','fruta':'FROO-tah','bosque':'BOHS-keh',
+    'tierra':'TYEH-rah','agua':'AH-gwah','sol':'sohl','verde':'BEHR-deh',
+    'corteza':'kor-TEH-sah','dosel':'doh-SEHL','refugio':'reh-FOO-hyoh',
+    'crecer':'kreh-SEHR','estaciones':'ehs-tah-SYOH-nehs','cambio':'KAHM-byoh',
+    'observar':'ohb-sehr-BAHR','comparar':'kohm-pah-RAHR','asombro':'ah-SOHM-broh',
+    'comunidad':'koh-moo-nee-DAHD','crecimiento':'kreh-see-MYEHN-toh',
+    'unico':'OO-nee-koh','único':'OO-nee-koh','conectado':'koh-nehk-TAH-doh',
   };
-  const lower = (word || '').toLowerCase().replace(/[^a-záéíóúüñ]/g, '');
+  const lower = (word || '').toLowerCase().trim();
   return map[lower] || null;
 }
 
-// ============================================================
-// BUILD FULL LESSON PAGE
-// ============================================================
+// ── FM TRANSITION BUTTON HTML ──
+function fmBtn(fruitfulMoments, idx, label) {
+  const fm = fruitfulMoments[idx];
+  if (fm) {
+    return `<button class="fm-transition-btn" onclick="FF.openFMModal(${idx})">
+      <span style="font-size:20px;">🍎</span>
+      <div style="flex:1;">
+        <div class="fm-tb-title">${fm.title || label || 'Fruitful Moment'}</div>
+        <div class="fm-tb-hint">Tap to open full transition activity</div>
+      </div>
+      <span class="fm-tb-arrow">▶</span>
+    </button>`;
+  }
+  // Generic fallback
+  return `<button class="fm-transition-btn" onclick="FF.openGenericTransition('${(label || 'Transition').replace(/'/g, '\\u0027')}')">
+    <span style="font-size:20px;">🍎</span>
+    <div style="flex:1;">
+      <div class="fm-tb-title">${label || 'Fruitful Moment Transition'}</div>
+      <div class="fm-tb-hint">Tap for transition ideas</div>
+    </div>
+    <span class="fm-tb-arrow">▶</span>
+  </button>`;
+}
+
+// ── BUILD LESSON PAGE ──
 async function buildLessonPage(lesson) {
   const content = lesson.content || '';
   const sections = parseLessonSections(content);
+  const allKeys = Object.keys(sections);
+
   const fruitfulMoments = extractFruitfulMoments(content);
   const docExamples = extractDocExamples(content);
-  const storySection = sections['STORY GATHERING'] || sections['4. STORY GATHERING'] || '';
+  const storySection = getSection(sections, 'STORY GATHERING', '4. STORY GATHERING', 'STORY');
   const storyParts = extractStoryParts(storySection);
   const familyConnectionText = buildFamilyConnection(lesson, sections);
 
-  let bookCoverUrl = null;
-  let bookTitle = '', bookAuthor = '';
+  let bookCoverUrl = null, bookTitle = '', bookAuthor = '';
   if (lesson.required_book) {
     try {
       const book = typeof lesson.required_book === 'string' ? JSON.parse(lesson.required_book) : lesson.required_book;
-      bookTitle = book.title || '';
-      bookAuthor = book.author || '';
+      bookTitle = book.title || ''; bookAuthor = book.author || '';
       bookCoverUrl = await fetchBookCover(bookTitle, bookAuthor);
     } catch(e) {}
   }
@@ -277,52 +277,31 @@ async function buildLessonPage(lesson) {
   const dayNum = lesson.day_number || 1;
   const isOptional = dayNum >= 21;
   const vocab = lesson.vocabulary_word || '';
-  const spanishVocab = lesson.spanish_vocabulary || '';
-  const spanishPron = spanishPronunciation(spanishVocab);
+  const spanishVocabWord = lesson.spanish_vocabulary || '';
+  const pronHint = spanishPron(spanishVocabWord);
 
-  // Skill builders — remove ONLY teaching sequence and observation questions; KEEP steps + multilingual + inclusion
-  const skillPrimary = (sections['SKILL BUILDERS PRIMARY'] || sections['5. SKILL BUILDERS PRIMARY'] || '')
-    .replace(/\*\*TEACHING SEQUENCE[^*]*\*\*[\s\S]*?(?=\*\*MULTILINGUAL|\*\*INCLUDING ALL|\*\*STEP|\n##|$)/gi, '')
-    .replace(/\*\*OBSERVATION QUESTIONS[^*]*\*\*[\s\S]*?(?=\n##|$)/gi, '');
-  const skillAdditional = (sections['SKILL BUILDERS ADDITIONAL'] || sections['6. SKILL BUILDERS ADDITIONAL'] || '')
-    .replace(/\*\*TEACHING SEQUENCE[^*]*\*\*[\s\S]*?(?=\*\*MULTILINGUAL|\*\*INCLUDING ALL|\*\*STEP|\n##|$)/gi, '')
-    .replace(/\*\*OBSERVATION QUESTIONS[^*]*\*\*[\s\S]*?(?=\n##|$)/gi, '');
-
-  // Choice time — strip doc examples from inline, they go in modal
-  const choiceContent = (sections['CHOICE TIME'] || sections['3. CHOICE TIME'] || '')
-    .replace(/CIRCLE OF FRIENDS SCENARIO[\s\S]*?(?=\n###|\n##|FRUIT OF THE SPIRIT|\n---END|$)/gi, '');
-
-  // Reflection — strip family connection (shown in custom box)
-  const reflectionContent = (sections['REFLECTION TIME'] || sections['9. REFLECTION TIME'] || '')
+  // Section content
+  const headerContent = getSection(sections, 'HEADER BLOCK', '1. HEADER BLOCK', 'HEADER');
+  const discoveryContent = getSection(sections, 'DISCOVERY CIRCLE', '2. DISCOVERY CIRCLE', 'DISCOVERY');
+  const choiceRaw = getSection(sections, 'CHOICE TIME', '3. CHOICE TIME', 'CHOICE');
+  const choiceContent = choiceRaw.replace(/CIRCLE OF FRIENDS SCENARIO[\s\S]*?(?=\n###|\n##|FRUIT OF THE SPIRIT|\n---END|$)/gi, '');
+  const skillPrimary = getSection(sections, 'SKILL BUILDERS PRIMARY', '5. SKILL BUILDERS PRIMARY', 'SKILL BUILDERS');
+  const skillAdditional = getSection(sections, 'SKILL BUILDERS ADDITIONAL', '6. SKILL BUILDERS ADDITIONAL');
+  const outdoorContent = getSection(sections, 'OUTDOOR TIME', '8. OUTDOOR TIME', 'OUTDOOR');
+  const reflectionContent = getSection(sections, 'REFLECTION TIME', '9. REFLECTION TIME', 'REFLECTION')
     .replace(/FAMILY CONNECTION[\s\S]*$/i, '');
+  const teachersHeart = getSection(sections, "TEACHER'S HEART", 'TEACHERS HEART', '10. TEACHERS HEART', "TEACHER'S HEART", 'HEART');
 
-  // Safe JSON embedding
+  // Debug info (removed in prod but helpful for now)
+  const debugKeys = allKeys.join(' | ');
+
+  // Safe JSON for inline script
+  const safeJSON = (obj) => JSON.stringify(obj).replace(/<\/script>/gi, '<\\/script>').replace(/\\/g, '\\\\').replace(/`/g, '\\`');
+
   const fmJSON = JSON.stringify(fruitfulMoments).replace(/<\/script>/gi, '<\\/script>');
   const docJSON = JSON.stringify(docExamples).replace(/<\/script>/gi, '<\\/script>');
   const storyJSON = JSON.stringify(storyParts).replace(/<\/script>/gi, '<\\/script>');
   const fcJSON = JSON.stringify(familyConnectionText).replace(/<\/script>/gi, '<\\/script>');
-
-  // Fruitful moment mini-buttons rendered after each section
-  const fmButton = (idx, label) => {
-    const fm = fruitfulMoments[idx];
-    if (!fm && idx >= fruitfulMoments.length) {
-      // Fallback generic transition button
-      return `<div class="fm-transition-btn" onclick="openGenericTransition()">
-        <span>🍎</span>
-        <div><div class="fm-tb-title">${label || 'Fruitful Moment Transition'}</div>
-        <div class="fm-tb-hint">Click for transition ideas</div></div>
-        <span class="fm-tb-arrow">▶</span>
-      </div>`;
-    }
-    const f = fm || fruitfulMoments[fruitfulMoments.length - 1];
-    const i = fm ? idx : fruitfulMoments.length - 1;
-    return `<div class="fm-transition-btn" onclick="openFMModal(${i})">
-      <span>🍎</span>
-      <div><div class="fm-tb-title">${f.title || label || 'Fruitful Moment'}</div>
-      <div class="fm-tb-hint">Click to open full transition activity</div></div>
-      <span class="fm-tb-arrow">▶</span>
-    </div>`;
-  };
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -341,21 +320,26 @@ async function buildLessonPage(lesson) {
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Source Sans 3',sans-serif;background:var(--cream);color:var(--tx);font-size:15px;line-height:1.7;}
 
-/* ── TOPBAR ── */
-.topbar{background:var(--gd);color:#fff;padding:10px 24px;display:flex;align-items:center;
-  justify-content:space-between;position:sticky;top:0;z-index:300;box-shadow:0 2px 8px rgba(0,0,0,.25);}
-.topbar-brand{font-family:'Playfair Display',serif;font-size:17px;color:#D8F3DC;}
-.topbar-btns{display:flex;gap:8px;flex-wrap:wrap;}
-.tbtn{padding:5px 14px;border-radius:20px;border:none;cursor:pointer;font-size:12px;font-weight:700;transition:.2s;}
+/* TOPBAR */
+.topbar{background:var(--gd);color:#fff;padding:10px 20px;display:flex;align-items:center;
+  justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.3);}
+.topbar-brand{font-family:'Playfair Display',serif;font-size:16px;color:#D8F3DC;flex-shrink:0;}
+.topbar-btns{display:flex;gap:7px;flex-wrap:wrap;}
+.tbtn{padding:5px 13px;border-radius:20px;border:none;cursor:pointer;font-size:12px;font-weight:700;
+  transition:.15s;font-family:inherit;-webkit-tap-highlight-color:transparent;}
 .tbtn-back{background:transparent;color:#D8F3DC;border:1px solid #52B788;}
+.tbtn-back:hover{background:#2D6A4F;}
 .tbtn-prep{background:#2D6A4F;color:#fff;border:1px solid #52B788;}
+.tbtn-prep:hover{background:#40916C;}
 .tbtn-fm{background:#E76F51;color:#fff;}
+.tbtn-fm:hover{background:#C4512B;}
 .tbtn-print{background:var(--gold);color:#1A1A2E;}
+.tbtn-print:hover{background:#B8860B;color:#fff;}
 
-/* ── LAYOUT ── */
+/* LAYOUT */
 .wrap{max-width:860px;margin:0 auto;padding:28px 20px;}
 
-/* ── TITLE / META ── */
+/* TITLE */
 .lesson-title{font-family:'Playfair Display',serif;font-size:26px;color:var(--gd);line-height:1.3;margin-bottom:6px;}
 .lesson-sub{font-size:15px;color:var(--txl);margin-bottom:16px;}
 .meta-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px;padding-bottom:20px;border-bottom:3px solid var(--gl);}
@@ -367,146 +351,133 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--cream);color:var(--
 .badge-dft{background:#FED7D7;color:#9B2C2C;}
 .badge-opt{background:var(--purp);color:var(--pur);}
 
-/* ── JUMP NAV ── */
+/* JUMP NAV */
 .jump-nav{background:#fff;border-radius:10px;padding:12px 16px;margin-bottom:24px;
   box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;flex-wrap:wrap;gap:8px;}
-.jump-nav-label{font-size:11px;color:var(--txl);text-transform:uppercase;font-weight:700;width:100%;margin-bottom:2px;}
+.jump-label{font-size:11px;color:var(--txl);text-transform:uppercase;font-weight:700;width:100%;margin-bottom:2px;}
 .jlink{background:var(--gp);color:var(--gd);padding:5px 12px;border-radius:16px;font-size:12px;
-  font-weight:700;cursor:pointer;border:none;transition:.2s;}
+  font-weight:700;cursor:pointer;border:none;transition:.15s;font-family:inherit;}
 .jlink:hover{background:var(--gl);color:#fff;}
 
-/* ── PREP BANNER ── */
-.prep-banner{background:#EBF8FF;border:1px solid #90CDF4;border-radius:10px;padding:14px 20px;
-  margin-bottom:24px;display:flex;align-items:center;gap:14px;}
-.prep-banner-text strong{display:block;color:#2B6CB0;font-size:14px;}
-.prep-banner-text span{font-size:12px;color:var(--txl);}
-.prep-banner-btn{background:#2B6CB0;color:#fff;padding:7px 18px;border-radius:8px;border:none;
-  cursor:pointer;font-size:13px;font-weight:700;white-space:nowrap;}
+/* PREP BANNER */
+.prep-banner{background:#EBF8FF;border:1px solid #90CDF4;border-radius:10px;padding:14px 18px;
+  margin-bottom:24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.prep-text strong{display:block;color:#2B6CB0;font-size:14px;}
+.prep-text span{font-size:12px;color:var(--txl);}
+.prep-open-btn{background:#2B6CB0;color:#fff;padding:7px 16px;border-radius:8px;border:none;
+  cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;}
 
-/* ── VOCAB CARD ── */
+/* VOCAB CARD */
 .vocab-card{background:linear-gradient(135deg,var(--gp),#fff);border:2px solid var(--gl);
-  border-radius:12px;padding:20px 24px;margin-bottom:24px;display:grid;
-  grid-template-columns:1fr 1fr;gap:16px;}
-.vocab-english{font-family:'Playfair Display',serif;font-size:22px;color:var(--gd);font-weight:700;}
-.vocab-def{font-size:14px;color:var(--tx);margin-top:4px;line-height:1.6;}
-.vocab-spanish{font-size:18px;font-weight:700;color:var(--gm);}
-.vocab-pron{font-size:13px;color:var(--txl);font-style:italic;margin-top:2px;}
-.vocab-label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--txl);font-weight:700;margin-bottom:4px;}
+  border-radius:12px;padding:20px 22px;margin-bottom:24px;
+  display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.vocab-lbl{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--txl);font-weight:700;margin-bottom:4px;}
+.vocab-en{font-family:'Playfair Display',serif;font-size:24px;color:var(--gd);font-weight:700;}
+.vocab-def{font-size:13px;color:var(--tx);margin-top:5px;line-height:1.6;}
+.vocab-es{font-size:20px;font-weight:700;color:var(--gm);}
+.vocab-pron{font-size:13px;color:var(--txl);font-style:italic;margin-top:3px;}
 
-/* ── SECTION CARDS ── */
-.sec{margin-bottom:28px;border-radius:12px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.07);}
+/* SECTION CARDS */
+.sec{margin-bottom:28px;border-radius:12px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.08);}
 .sec-hd{padding:13px 22px;display:flex;align-items:center;gap:10px;color:#fff;}
 .sec-icon{font-size:20px;}
 .sec-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;}
 .sec-body{background:#fff;padding:22px;}
+.empty-notice{color:var(--txl);font-size:13px;font-style:italic;padding:10px;
+  background:#F7FAFC;border-radius:8px;border:1px dashed var(--bdr);}
 
-/* ── TEACHER SCRIPTS ── */
-.speaker{padding:2px 9px;border-radius:12px;font-size:11px;font-weight:800;white-space:nowrap;flex-shrink:0;}
-.teacher-sp{background:var(--gd);color:#fff;}
-.children-sp{background:var(--gold);color:#1A1A2E;}
-.child-sp{background:var(--pur);color:#fff;}
+/* SCRIPTS */
+.sp-teacher{background:var(--gd);color:#fff;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:800;white-space:nowrap;}
+.sp-children{background:var(--gold);color:#1A1A2E;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:800;white-space:nowrap;}
+.sp-child{background:var(--pur);color:#fff;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:800;white-space:nowrap;}
 .stage{color:#666;font-style:italic;display:block;padding:3px 14px;border-left:2px solid #CBD5E0;margin:4px 0;}
-.step-hd{background:var(--gd);color:#fff;padding:7px 14px;border-radius:6px;font-weight:700;
-  font-size:13px;margin:14px 0 6px 0;}
+.step-hd{background:var(--gd);color:#fff;padding:7px 14px;border-radius:6px;font-weight:700;font-size:13px;margin:12px 0 6px;}
 ul{padding-left:20px;margin:6px 0;}li{padding:3px 0;}p{margin:5px 0;}
-.sub-hd{font-family:'Playfair Display',serif;font-size:15px;color:var(--gd);
-  margin:18px 0 8px 0;padding-bottom:3px;border-bottom:2px solid var(--gp);}
-.sub-sub-hd{font-size:13px;font-weight:800;color:var(--br);text-transform:uppercase;
-  letter-spacing:.5px;margin:12px 0 5px 0;}
-.inner-hr{border:none;height:2px;background:linear-gradient(to right,var(--gp),var(--gl),var(--gp));
-  margin:20px 0;border-radius:2px;}
+.sub-hd{font-family:'Playfair Display',serif;font-size:15px;color:var(--gd);margin:18px 0 8px;padding-bottom:3px;border-bottom:2px solid var(--gp);}
+.sub-sub-hd{font-size:13px;font-weight:800;color:var(--br);text-transform:uppercase;letter-spacing:.5px;margin:12px 0 5px;}
+.inner-hr{border:none;height:2px;background:linear-gradient(to right,var(--gp),var(--gl),var(--gp));margin:18px 0;border-radius:2px;}
+.tbl{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px;}
+.tbl td{border:1px solid var(--bdr);padding:7px 10px;vertical-align:top;}
+.tbl tr:first-child td{background:var(--gp);font-weight:700;color:var(--gd);}
 
-/* ── CLICKABLE BLOCKS (FM, Doc) ── */
-.clickable-block{background:var(--orap);border:2px solid var(--ora);border-radius:10px;
-  padding:14px 18px;margin:10px 0;cursor:pointer;transition:.2s;
-  display:flex;align-items:center;justify-content:space-between;width:100%;text-align:left;}
-.clickable-block:hover{background:#FFE8DE;border-color:#C4512B;}
-.clickable-block-title{font-family:'Playfair Display',serif;font-size:15px;color:var(--ora);font-weight:700;}
-.clickable-block-hint{font-size:12px;color:var(--txl);}
-.cb-arrow{color:var(--ora);font-size:18px;}
-
-/* ── FM TRANSITION BUTTONS (between sections) ── */
+/* FM TRANSITION BUTTONS */
 .fm-transition-btn{background:linear-gradient(135deg,#FFF8F0,#FFE8D6);border:2px solid #F4A261;
-  border-radius:10px;padding:12px 18px;margin:16px 0;cursor:pointer;transition:.2s;
-  display:flex;align-items:center;gap:12px;width:100%;text-align:left;}
-.fm-transition-btn:hover{background:#FFE0C0;border-color:var(--ora);}
+  border-radius:10px;padding:12px 16px;margin:16px 0;cursor:pointer;transition:.15s;
+  display:flex;align-items:center;gap:12px;width:100%;text-align:left;font-family:inherit;}
+.fm-transition-btn:hover,.fm-transition-btn:focus{background:#FFE0C0;border-color:var(--ora);outline:none;}
 .fm-tb-title{font-weight:800;font-size:14px;color:#C4512B;}
 .fm-tb-hint{font-size:12px;color:var(--txl);}
-.fm-tb-arrow{color:var(--ora);font-size:18px;margin-left:auto;}
+.fm-tb-arrow{color:var(--ora);font-size:18px;margin-left:auto;flex-shrink:0;}
 
-/* ── STORY BUTTONS ── */
-.story-part-btn{background:var(--gp);border:2px solid var(--gl);border-radius:10px;
+/* STORY BUTTONS */
+.story-btn{background:var(--gp);border:2px solid var(--gl);border-radius:10px;
   padding:12px 18px;margin:8px 0;cursor:pointer;display:flex;align-items:center;
-  justify-content:space-between;transition:.2s;width:100%;text-align:left;}
-.story-part-btn:hover{background:#B7E4C7;border-color:var(--gd);}
-.story-part-label{font-weight:800;font-size:14px;color:var(--gd);}
-.story-part-hint{font-size:12px;color:var(--txl);}
+  justify-content:space-between;transition:.15s;width:100%;text-align:left;font-family:inherit;}
+.story-btn:hover,.story-btn:focus{background:#B7E4C7;border-color:var(--gd);outline:none;}
+.story-btn-label{font-weight:800;font-size:14px;color:var(--gd);}
+.story-btn-hint{font-size:12px;color:var(--txl);}
 
-/* ── DOC LINK ── */
-.doc-link{display:inline-flex;align-items:center;gap:6px;background:var(--purp);
-  border:1px solid #B794F4;border-radius:8px;padding:7px 16px;cursor:pointer;
-  font-size:13px;font-weight:700;color:var(--pur);margin:8px 0;transition:.2s;border:none;}
-.doc-link:hover{background:#D6BCFA;}
+/* DOC BUTTON */
+.doc-btn{display:inline-flex;align-items:center;gap:6px;background:var(--purp);
+  border:2px solid #B794F4;border-radius:8px;padding:8px 16px;cursor:pointer;
+  font-size:13px;font-weight:700;color:var(--pur);margin:8px 0;transition:.15s;font-family:inherit;}
+.doc-btn:hover,.doc-btn:focus{background:#D6BCFA;outline:none;}
 
-/* ── FAMILY CONNECTION ── */
-.fc-box{background:#FFFBEB;border:2px solid var(--gold);border-radius:10px;padding:20px;margin:12px 0;}
+/* FAMILY CONNECTION */
+.fc-box{background:#FFFBEB;border:2px solid var(--gold);border-radius:10px;padding:20px;margin:14px 0;}
 .fc-title{font-family:'Playfair Display',serif;font-size:16px;color:var(--br);margin-bottom:12px;font-weight:700;}
-.fc-summary{font-size:14px;line-height:1.8;color:var(--tx);}
-.fc-summary strong{color:var(--gd);}
+.fc-body{font-size:14px;line-height:1.8;color:var(--tx);}
 .fc-question{background:var(--goldb);border-left:4px solid var(--gold);border-radius:0 8px 8px 0;
-  padding:10px 16px;margin:14px 0;font-size:14px;font-weight:600;color:var(--br);}
+  padding:10px 16px;margin:12px 0;font-size:14px;font-weight:600;color:var(--br);}
 .fc-copy-btn{background:var(--gold);color:#1A1A2E;border:none;border-radius:8px;padding:8px 20px;
-  cursor:pointer;font-size:13px;font-weight:700;margin-top:14px;transition:.2s;}
+  cursor:pointer;font-size:13px;font-weight:700;margin-top:12px;transition:.15s;font-family:inherit;}
 .fc-copy-btn:hover{background:#B8860B;color:#fff;}
-.fc-copied-msg{display:none;color:var(--gm);font-size:13px;margin-left:12px;font-weight:800;
-  background:var(--gp);padding:4px 12px;border-radius:12px;}
+.fc-copied{display:none;color:var(--gm);font-size:13px;margin-left:12px;font-weight:800;
+  background:var(--gp);padding:4px 12px;border-radius:12px;vertical-align:middle;}
 
-/* ── BOOK WIDGET ── */
+/* BOOK WIDGET */
 .book-widget{display:flex;gap:14px;align-items:center;background:#F7FAFC;border-radius:10px;
   padding:14px;margin:12px 0;border:1px solid var(--bdr);}
-.book-cover{width:70px;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,.15);}
+.book-cover{width:65px;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,.15);}
 
-/* ── FIXED PANELS (Prep, FM) ── */
-.page-panel{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:#fff;
-  z-index:500;overflow-y:auto;padding:32px 36px;}
-.page-panel.active{display:block;}
-.panel-topbar{position:sticky;top:0;background:#fff;z-index:10;padding:12px 0 16px 0;
-  border-bottom:2px solid var(--bdr);margin-bottom:20px;display:flex;gap:10px;align-items:center;}
-.panel-title{font-family:'Playfair Display',serif;font-size:20px;flex:1;}
-.panel-close-btn{background:var(--gd);color:#fff;border:none;border-radius:8px;
-  padding:8px 18px;cursor:pointer;font-size:13px;font-weight:700;}
-.panel-print-btn{background:var(--gold);color:#1A1A2E;border:none;border-radius:8px;
-  padding:8px 18px;cursor:pointer;font-size:13px;font-weight:700;}
-
-/* FM cards in panel — 1-per-column */
+/* PAGE PANELS (Prep / FM) */
+.page-panel{display:none;position:fixed;inset:0;background:#fff;z-index:1000;overflow-y:auto;padding:0;}
+.page-panel.open{display:block;}
+.panel-hd{position:sticky;top:0;background:#fff;z-index:5;padding:14px 24px;
+  border-bottom:2px solid var(--bdr);display:flex;align-items:center;gap:10px;box-shadow:0 2px 6px rgba(0,0,0,.08);}
+.panel-hd-title{font-family:'Playfair Display',serif;font-size:19px;flex:1;}
+.panel-close{background:var(--gd);color:#fff;border:none;border-radius:8px;padding:7px 16px;
+  cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;}
+.panel-print{background:var(--gold);color:#1A1A2E;border:none;border-radius:8px;padding:7px 16px;
+  cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;}
+.panel-body{padding:24px 32px;}
+/* FM cards in panel — single column, padded */
 .fm-card{background:linear-gradient(135deg,#FFF8F0,#FFF3E0);border:2px solid #F4A261;
   border-radius:10px;padding:20px;margin-bottom:20px;}
 .fm-card-hd{font-family:'Playfair Display',serif;color:#E76F51;font-size:16px;font-weight:700;margin-bottom:8px;}
-.fm-card-type{background:#E76F51;color:#fff;border-radius:6px;padding:3px 10px;
-  font-size:11px;font-weight:800;display:inline-block;margin-bottom:8px;}
 
-/* ── MODAL ── */
-.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);
-  z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;}
-.modal-overlay.open{display:flex;}
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2000;
+  display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-bg.open{display:flex;}
 .modal-box{background:#fff;border-radius:14px;max-width:640px;width:100%;max-height:88vh;
-  overflow-y:auto;padding:28px;box-shadow:0 8px 40px rgba(0,0,0,.25);position:relative;}
-.modal-title{font-family:'Playfair Display',serif;font-size:20px;color:var(--gd);margin-bottom:16px;
-  padding-right:40px;}
-.modal-close-btn{position:absolute;top:16px;right:16px;background:var(--gp);border:none;
-  border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px;font-weight:700;color:var(--gd);}
-.modal-finish{background:var(--gl);color:#fff;border:none;border-radius:8px;padding:10px 24px;
-  cursor:pointer;font-size:14px;font-weight:700;margin-top:20px;width:100%;}
+  overflow-y:auto;padding:28px;box-shadow:0 8px 40px rgba(0,0,0,.3);position:relative;}
+.modal-title{font-family:'Playfair Display',serif;font-size:20px;color:var(--gd);
+  margin-bottom:16px;padding-right:40px;}
+.modal-x{position:absolute;top:14px;right:14px;background:var(--gp);border:none;
+  border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px;font-weight:700;color:var(--gd);font-family:inherit;}
+.modal-done{background:var(--gl);color:#fff;border:none;border-radius:8px;padding:10px 24px;
+  cursor:pointer;font-size:14px;font-weight:700;margin-top:18px;width:100%;font-family:inherit;}
 
-/* ── PRINT ── */
+/* PRINT */
 @media print{
-  .topbar,.jump-nav,.prep-banner,.modal-overlay,
-  .page-panel,.tbtn,.jlink{display:none!important;}
-  .sec{box-shadow:none;margin-bottom:16px;}
+  .topbar,.jump-nav,.prep-banner,.page-panel,.modal-bg,
+  .tbtn,.jlink,.fm-transition-btn,.prep-open-btn{display:none!important;}
+  .sec{box-shadow:none;margin-bottom:14px;}
   body{background:#fff;}
 }
 @media(max-width:640px){
-  .topbar-btns{gap:4px;}.tbtn{padding:4px 10px;font-size:11px;}
+  .topbar-btns{gap:4px;}.tbtn{padding:4px 9px;font-size:11px;}
   .wrap{padding:16px 12px;}
   .vocab-card{grid-template-columns:1fr;}
 }
@@ -519,158 +490,169 @@ ul{padding-left:20px;margin:6px 0;}li{padding:3px 0;}p{margin:5px 0;}
   <div class="topbar-brand">🌳 Faithful Foundations</div>
   <div class="topbar-btns">
     <button class="tbtn tbtn-back" onclick="window.history.back()">← Back</button>
-    <button class="tbtn tbtn-prep" onclick="openPanel('panel-prep')">📋 Prep</button>
-    <button class="tbtn tbtn-fm" onclick="openPanel('panel-fm')">🍎 Fruitful Moments</button>
+    <button class="tbtn tbtn-prep" onclick="FF.openPanel('panel-prep')">📋 Prep</button>
+    <button class="tbtn tbtn-fm" onclick="FF.openPanel('panel-fm')">🍎 Fruitful Moments</button>
     <button class="tbtn tbtn-print" onclick="window.print()">🖨️ Print</button>
   </div>
 </div>
 
-<!-- ── FIXED PREP PANEL ── -->
+<!-- PREP PANEL -->
 <div class="page-panel" id="panel-prep">
-  <div class="panel-topbar">
-    <div class="panel-title" style="color:#2B6CB0;">📋 Materials &amp; Lesson Prep — Day ${dayNum}</div>
-    <button class="panel-print-btn" onclick="printPanel('panel-prep')">🖨️ Print</button>
-    <button class="panel-close-btn" onclick="closePanel('panel-prep')">✕ Close</button>
+  <div class="panel-hd">
+    <div class="panel-hd-title" style="color:#2B6CB0;">📋 Materials &amp; Prep — Day ${dayNum}</div>
+    <button class="panel-print" onclick="FF.printPanel('prep-body')">🖨️ Print</button>
+    <button class="panel-close" onclick="FF.closePanel('panel-prep')">✕ Close</button>
   </div>
-  <p style="color:var(--txl);font-size:13px;margin-bottom:16px;">Gather all items before children arrive.</p>
-  <div id="prep-content">${md2html(sections['HEADER BLOCK'] || sections['1. HEADER BLOCK'] || '<p>Materials checklist will appear here from your Header Block.</p>')}</div>
+  <div class="panel-body" id="prep-body">
+    <p style="color:var(--txl);font-size:13px;margin-bottom:16px;">Gather all items before children arrive.</p>
+    ${md2html(headerContent) || '<p class="empty-notice">Header Block content will appear here after lesson generation.</p>'}
+  </div>
 </div>
 
-<!-- ── FIXED FM PANEL ── -->
+<!-- FM PANEL -->
 <div class="page-panel" id="panel-fm">
-  <div class="panel-topbar">
-    <div class="panel-title" style="color:#E76F51;">🍎 Fruitful Moments — Day ${dayNum}</div>
-    <button class="panel-print-btn" onclick="printPanel('panel-fm')">🖨️ Print</button>
-    <button class="panel-close-btn" onclick="closePanel('panel-fm')">✕ Close</button>
+  <div class="panel-hd">
+    <div class="panel-hd-title" style="color:#E76F51;">🍎 Fruitful Moments — Day ${dayNum}</div>
+    <button class="panel-print" onclick="FF.printPanel('fm-body')">🖨️ Print</button>
+    <button class="panel-close" onclick="FF.closePanel('panel-fm')">✕ Close</button>
   </div>
-  <p style="color:var(--txl);font-size:13px;margin-bottom:16px;">Post in your Discovery Circle. Use for transitions and gathering throughout the day.</p>
-  <div id="fm-panel-list"></div>
+  <div class="panel-body" id="fm-body">
+    <p style="color:var(--txl);font-size:13px;margin-bottom:16px;">Post in Discovery Circle. Use throughout the day for transitions and gathering.</p>
+    <div id="fm-cards-list"></div>
+  </div>
 </div>
 
-<!-- ── MAIN CONTENT ── -->
-<div class="wrap">
+<!-- MODAL -->
+<div class="modal-bg" id="modal-bg" onclick="FF.closeModal(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <button class="modal-x" onclick="FF.closeModal()">✕</button>
+    <div class="modal-title" id="modal-title"></div>
+    <div id="modal-body"></div>
+    <button class="modal-done" onclick="FF.closeModal()">✓ Finish — Return to Lesson</button>
+  </div>
+</div>
 
+<!-- MAIN -->
+<div class="wrap">
   <div class="lesson-title">Faithful Foundations — Exploring Trees</div>
   <div class="lesson-sub">Day ${dayNum} of 25${isOptional ? ' <em style="color:var(--pur);font-size:13px;">(Optional/Bonus)</em>' : ''} — ${lesson.focus || ''}</div>
   <div class="meta-row">
     <span class="badge badge-g">Week ${lesson.week_number || ''}</span>
-    <span class="badge badge-g">${(lesson.age_band || '').replace('_',' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+    <span class="badge badge-g">${(lesson.age_band || '').replace('_',' ').replace(/\b\w/g,l=>l.toUpperCase())}</span>
     <span class="badge badge-f">🍇 ${lesson.fruit_of_spirit || ''}</span>
-    <span class="badge badge-g">📖 ${vocab}</span>
-    <span class="badge ${lesson.status === 'published' ? 'badge-pub' : lesson.status === 'approved' ? 'badge-app' : 'badge-dft'}">${lesson.status === 'published' ? '✓ Published' : lesson.status === 'approved' ? '✓ Approved' : '⚑ Draft'}</span>
+    ${vocab ? '<span class="badge badge-g">📖 ' + vocab + '</span>' : ''}
+    <span class="badge ${lesson.status==='published'?'badge-pub':lesson.status==='approved'?'badge-app':'badge-dft'}">${lesson.status==='published'?'✓ Published':lesson.status==='approved'?'✓ Approved':'⚑ Draft'}</span>
     ${isOptional ? '<span class="badge badge-opt">★ Optional Day</span>' : ''}
   </div>
 
   <!-- JUMP NAV -->
-  <nav class="jump-nav" id="jump-nav" aria-label="Jump to section">
-    <div class="jump-nav-label">Jump to Section</div>
-    <button class="jlink" onclick="jumpTo('sec-header-block')">📋 Header</button>
-    <button class="jlink" onclick="jumpTo('sec-discovery')">⭕ Discovery Circle</button>
-    <button class="jlink" onclick="jumpTo('sec-choice')">🎨 Choice Time</button>
-    <button class="jlink" onclick="jumpTo('sec-story')">📖 Story Gathering</button>
-    <button class="jlink" onclick="jumpTo('sec-skill1')">🌱 Skill Builders</button>
-    <button class="jlink" onclick="jumpTo('sec-outdoor')">☀️ Outdoor</button>
-    <button class="jlink" onclick="jumpTo('sec-reflection')">💛 Reflection</button>
-    <button class="jlink" onclick="jumpTo('sec-heart')">❤️ Teacher's Heart</button>
+  <nav class="jump-nav">
+    <div class="jump-label">Jump to Section</div>
+    <button class="jlink" onclick="FF.jump('s-header')">📋 Header</button>
+    <button class="jlink" onclick="FF.jump('s-discovery')">⭕ Discovery Circle</button>
+    <button class="jlink" onclick="FF.jump('s-choice')">🎨 Choice Time</button>
+    <button class="jlink" onclick="FF.jump('s-story')">📖 Story Gathering</button>
+    <button class="jlink" onclick="FF.jump('s-skill1')">🌱 Skill Builders</button>
+    <button class="jlink" onclick="FF.jump('s-outdoor')">☀️ Outdoor</button>
+    <button class="jlink" onclick="FF.jump('s-reflection')">💛 Reflection</button>
+    <button class="jlink" onclick="FF.jump('s-heart')">❤️ Teacher's Heart</button>
   </nav>
 
   <!-- PREP BANNER -->
   <div class="prep-banner">
-    <div style="font-size:26px;">📋</div>
-    <div class="prep-banner-text">
-      <strong>Materials &amp; Lesson Preparation</strong>
-      <span>Review checklist and room setup before children arrive</span>
-    </div>
-    <button class="prep-banner-btn" onclick="openPanel('panel-prep')">Open Prep Checklist</button>
+    <div style="font-size:24px;">📋</div>
+    <div class="prep-text"><strong>Materials &amp; Lesson Preparation</strong><span>Review checklist before children arrive</span></div>
+    <button class="prep-open-btn" onclick="FF.openPanel('panel-prep')">Open Prep Checklist</button>
   </div>
 
-  <!-- VOCABULARY CARD -->
+  <!-- VOCAB CARD -->
   ${vocab ? `<div class="vocab-card">
     <div>
-      <div class="vocab-label">Vocabulary Word</div>
-      <div class="vocab-english">${vocab}</div>
-      <div class="vocab-def" id="vocab-def-text">Definition will appear in the Header Block below.</div>
+      <div class="vocab-lbl">Vocabulary Word</div>
+      <div class="vocab-en">${vocab}</div>
+      <div class="vocab-def">See definition in Header Block below</div>
     </div>
     <div>
-      <div class="vocab-label">En Español</div>
-      <div class="vocab-spanish">${spanishVocab || '—'}</div>
-      ${spanishPron ? `<div class="vocab-pron">Pronounced: ${spanishPron}</div>` : '<div class="vocab-pron" id="vocab-pron-auto"></div>'}
+      <div class="vocab-lbl">En Español</div>
+      <div class="vocab-es">${spanishVocabWord || '—'}</div>
+      ${pronHint ? `<div class="vocab-pron">Say it: <strong>${pronHint}</strong></div>` : ''}
     </div>
   </div>` : ''}
 
-  <!-- TREE PHOTO -->
-  <div style="text-align:center;background:var(--gp);border-radius:12px;padding:16px;margin-bottom:24px;" id="sec-header">
-    ${TREE_PHOTO_HTML}
+  <!-- TREE DIAGRAM -->
+  <div style="text-align:center;background:var(--gp);border-radius:12px;padding:16px;margin-bottom:24px;" id="s-header">
+    ${TREE_SVG}
+    <p style="font-size:12px;color:var(--txl);margin-top:8px;font-style:italic;">Point to each part and name it together with children</p>
   </div>
 
   <!-- 1. HEADER BLOCK -->
-  <div class="sec" id="sec-header-block">
+  <div class="sec" id="s-header-card">
     <div class="sec-hd" style="background:#1B4332;border-left:6px solid #52B788;">
       <span class="sec-icon">🌳</span><span class="sec-title">Header Block</span>
     </div>
-    <div class="sec-body">${md2html(sections['HEADER BLOCK'] || sections['1. HEADER BLOCK'] || '')}</div>
+    <div class="sec-body">${md2html(headerContent) || '<p class="empty-notice">Header Block will appear here after lesson generation.</p>'}</div>
   </div>
 
-  ${fmButton(0, 'Opening Fruitful Moment')}
+  ${fmBtn(fruitfulMoments, 0, 'Opening Fruitful Moment')}
 
   <!-- 2. DISCOVERY CIRCLE -->
-  <div class="sec" id="sec-discovery">
+  <div class="sec" id="s-discovery">
     <div class="sec-hd" style="background:#1B4332;border-left:6px solid #74C69D;">
       <span class="sec-icon">⭕</span><span class="sec-title">Discovery Circle</span>
     </div>
-    <div class="sec-body">${md2html(sections['DISCOVERY CIRCLE'] || sections['2. DISCOVERY CIRCLE'] || '')}</div>
+    <div class="sec-body">${md2html(discoveryContent) || '<p class="empty-notice">Discovery Circle will appear here after lesson generation.</p>'}</div>
   </div>
 
-  ${fmButton(1, 'Transition to Choice Time')}
+  ${fmBtn(fruitfulMoments, 1, 'Transition to Choice Time')}
 
   <!-- 3. CHOICE TIME -->
-  <div class="sec" id="sec-choice">
+  <div class="sec" id="s-choice">
     <div class="sec-hd" style="background:#2D6A4F;border-left:6px solid #95D5B2;">
       <span class="sec-icon">🎨</span><span class="sec-title">Choice Time</span>
     </div>
     <div class="sec-body">
-      <div style="background:var(--purp);border:1px solid #B794F4;border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:13px;color:var(--pur);">
-        💡 <strong>Curiosity Builders</strong> for all centers are in your Weekly Resources (Week ${lesson.week_number || ''}) — print and post in each area.
+      <div style="background:var(--purp);border:1px solid #B794F4;border-radius:8px;padding:10px 16px;margin-bottom:14px;font-size:13px;color:var(--pur);">
+        💡 <strong>Curiosity Builders</strong> for all centers are in Weekly Resources (Week ${lesson.week_number||''}) — print and post in each area.
       </div>
-      <button class="doc-link" onclick="openDocModal()">📋 Documentation Examples — click to view</button>
-      ${md2html(choiceContent)}
+      <button class="doc-btn" onclick="FF.openDocModal()">📋 Documentation Examples — click to view</button>
+      ${md2html(choiceContent) || '<p class="empty-notice">Choice Time will appear here after lesson generation.</p>'}
     </div>
   </div>
 
-  ${fmButton(2, 'Transition to Story Gathering')}
+  ${fmBtn(fruitfulMoments, 2, 'Transition to Story Gathering')}
 
   <!-- 4. STORY GATHERING -->
-  <div class="sec" id="sec-story">
+  <div class="sec" id="s-story">
     <div class="sec-hd" style="background:#1B4332;border-left:6px solid #52B788;">
       <span class="sec-icon">📖</span><span class="sec-title">Story Gathering</span>
     </div>
     <div class="sec-body">
-      ${bookCoverUrl ? `<div class="book-widget"><img src="${bookCoverUrl}" class="book-cover" alt="book cover"><div style="padding:4px 0;"><strong style="font-size:14px;display:block;">${bookTitle}</strong><em style="font-size:13px;color:var(--txl);">by ${bookAuthor}</em></div></div>` : ''}
+      ${bookCoverUrl ? `<div class="book-widget"><img src="${bookCoverUrl}" class="book-cover" alt="book cover"><div><strong style="font-size:14px;display:block;">${bookTitle}</strong><em style="font-size:13px;color:var(--txl);">by ${bookAuthor}</em></div></div>` : ''}
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
-        <button class="story-part-btn" onclick="openStoryModal('before')">
-          <div><div class="story-part-label">📖 Before Reading</div><div class="story-part-hint">Click to open full script</div></div>
+        <button class="story-btn" onclick="FF.openStoryModal('before')">
+          <div><div class="story-btn-label">📖 Before Reading</div><div class="story-btn-hint">Click to open full script</div></div>
           <span style="color:var(--gd);font-size:20px;flex-shrink:0;">▶</span>
         </button>
-        <button class="story-part-btn" onclick="openStoryModal('during')">
-          <div><div class="story-part-label">📖 During Reading — Pause Points</div><div class="story-part-hint">Click to open discussion prompts</div></div>
+        <button class="story-btn" onclick="FF.openStoryModal('during')">
+          <div><div class="story-btn-label">📖 During Reading — Pause Points</div><div class="story-btn-hint">Click to open discussion prompts</div></div>
           <span style="color:var(--gd);font-size:20px;flex-shrink:0;">▶</span>
         </button>
-        <button class="story-part-btn" onclick="openStoryModal('after')">
-          <div><div class="story-part-label">📖 After Reading</div><div class="story-part-hint">Click to open closing discussion</div></div>
+        <button class="story-btn" onclick="FF.openStoryModal('after')">
+          <div><div class="story-btn-label">📖 After Reading</div><div class="story-btn-hint">Click to open closing discussion</div></div>
           <span style="color:var(--gd);font-size:20px;flex-shrink:0;">▶</span>
         </button>
       </div>
     </div>
   </div>
 
-  ${fmButton(3, 'Transition to Skill Builders')}
+  ${fmBtn(fruitfulMoments, 3, 'Transition to Skill Builders')}
 
   <!-- 5. SKILL BUILDERS PRIMARY -->
-  <div class="sec" id="sec-skill1">
+  <div class="sec" id="s-skill1">
     <div class="sec-hd" style="background:#2D6A4F;border-left:6px solid #B7E4C7;">
       <span class="sec-icon">🌱</span><span class="sec-title">Skill Builders Primary</span>
     </div>
-    <div class="sec-body">${md2html(skillPrimary)}</div>
+    <div class="sec-body">${md2html(skillPrimary) || '<p class="empty-notice">Skill Builders Primary will appear here after lesson generation.</p>'}</div>
   </div>
 
   <!-- 6. SKILL BUILDERS ADDITIONAL -->
@@ -678,272 +660,266 @@ ul{padding-left:20px;margin:6px 0;}li{padding:3px 0;}p{margin:5px 0;}
     <div class="sec-hd" style="background:#2D6A4F;border-left:6px solid #B7E4C7;">
       <span class="sec-icon">✨</span><span class="sec-title">Skill Builders Additional</span>
     </div>
-    <div class="sec-body">${md2html(skillAdditional)}</div>
+    <div class="sec-body">${md2html(skillAdditional) || '<p class="empty-notice">Skill Builders Additional will appear here after lesson generation.</p>'}</div>
   </div>
 
-  ${fmButton(4, 'Transition to Outdoor Time')}
+  ${fmBtn(fruitfulMoments, 4, 'Transition to Outdoor Time')}
 
   <!-- 8. OUTDOOR TIME -->
-  <div class="sec" id="sec-outdoor">
+  <div class="sec" id="s-outdoor">
     <div class="sec-hd" style="background:#2D6A4F;border-left:6px solid #95D5B2;">
       <span class="sec-icon">☀️</span><span class="sec-title">Outdoor Time</span>
     </div>
-    <div class="sec-body">${md2html(sections['OUTDOOR TIME'] || sections['8. OUTDOOR TIME'] || '')}</div>
+    <div class="sec-body">${md2html(outdoorContent) || '<p class="empty-notice">Outdoor Time will appear here after lesson generation.</p>'}</div>
   </div>
 
-  ${fmButton(5, 'Transition to Reflection Time')}
+  ${fmBtn(fruitfulMoments, 5, 'Transition to Reflection Time')}
 
   <!-- 9. REFLECTION TIME -->
-  <div class="sec" id="sec-reflection">
+  <div class="sec" id="s-reflection">
     <div class="sec-hd" style="background:#1B4332;border-left:6px solid #52B788;">
       <span class="sec-icon">💛</span><span class="sec-title">Reflection Time</span>
     </div>
     <div class="sec-body">
-      ${md2html(reflectionContent)}
-      <!-- FAMILY CONNECTION -->
-      <div class="fc-box" id="family-connection-box">
+      ${md2html(reflectionContent) || ''}
+      <div class="fc-box">
         <div class="fc-title">💌 Family Connection</div>
-        <div class="fc-summary" id="fc-display"></div>
+        <div class="fc-body" id="fc-body"></div>
         <div class="fc-question" id="fc-question"></div>
-        <div style="margin-top:14px;">
-          <button class="fc-copy-btn" onclick="copyFamilyConnection()" id="fc-copy-btn">📋 Copy for Daily Report</button>
-          <span class="fc-copied-msg" id="fc-copied">✓ Copied to clipboard!</span>
+        <div style="margin-top:12px;">
+          <button class="fc-copy-btn" id="fc-copy-btn" onclick="FF.copyFC()">📋 Copy for Daily Report</button>
+          <span class="fc-copied" id="fc-copied">✓ Copied to clipboard!</span>
         </div>
       </div>
     </div>
   </div>
 
   <!-- 10. TEACHER'S HEART -->
-  <div class="sec" id="sec-heart">
+  <div class="sec" id="s-heart">
     <div class="sec-hd" style="background:#774936;border-left:6px solid #C4956A;">
       <span class="sec-icon">❤️</span><span class="sec-title">Teacher's Heart</span>
     </div>
-    <div class="sec-body">${md2html(sections["TEACHER'S HEART"] || sections["TEACHERS HEART"] || sections['10. TEACHERS HEART'] || '')}</div>
+    <div class="sec-body">${md2html(teachersHeart) || '<p class="empty-notice">Teacher\'s Heart will appear here after lesson generation.</p>'}</div>
   </div>
+
+  <!-- DEBUG (shows section keys found — remove after testing) -->
+  <details style="margin-top:20px;font-size:12px;color:var(--txl);">
+    <summary style="cursor:pointer;padding:8px;background:#f5f5f5;border-radius:6px;">🔍 Debug: Section keys parsed (remove after testing)</summary>
+    <div style="padding:8px;background:#f9f9f9;border-radius:0 0 6px 6px;font-family:monospace;font-size:11px;word-break:break-all;">${debugKeys || 'No sections found — check content format'}</div>
+  </details>
 
 </div><!-- end .wrap -->
 
-<!-- MODAL -->
-<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
-  <div class="modal-box" onclick="event.stopPropagation()">
-    <button class="modal-close-btn" onclick="closeModal()">✕</button>
-    <div class="modal-title" id="modal-title"></div>
-    <div id="modal-body"></div>
-    <button class="modal-finish" onclick="closeModal()">✓ Finish — Return to Lesson</button>
-  </div>
-</div>
-
 <script>
-// ── Server data ──
-const FRUITFUL_MOMENTS = ${fmJSON};
-const DOC_EXAMPLES = ${docJSON};
-const STORY_PARTS = ${storyJSON};
-const FC_DATA = ${fcJSON};
+// ═══════════════════════════════════════════════
+// ALL INTERACTIVE LOGIC — namespaced under FF
+// ═══════════════════════════════════════════════
+var FF = (function() {
 
-// ── PANELS ──
-function openPanel(id) {
-  document.querySelectorAll('.page-panel').forEach(p => p.classList.remove('active'));
-  const el = document.getElementById(id);
-  if (el) { el.classList.add('active'); el.scrollTop = 0; document.body.style.overflow = 'hidden'; }
-}
-function closePanel(id) {
-  const el = document.getElementById(id);
-  if (el) { el.classList.remove('active'); document.body.style.overflow = ''; }
-}
-function printPanel(id) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  const win = window.open('', '_blank', 'width=900,height=700');
-  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Print</title>');
-  win.document.write('<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">');
-  win.document.write('<style>body{font-family:"Source Sans 3",sans-serif;padding:32px;font-size:14px;line-height:1.7;}');
-  win.document.write('.fm-card{background:#FFF8F0;border:2px solid #F4A261;border-radius:10px;padding:20px;margin-bottom:24px;page-break-inside:avoid;}');
-  win.document.write('.fm-card-hd{font-family:"Playfair Display",serif;color:#E76F51;font-size:17px;font-weight:700;margin-bottom:8px;}');
-  win.document.write('.panel-topbar,.panel-close-btn,.panel-print-btn{display:none!important;}');
-  win.document.write('ul{padding-left:20px;}li{margin-bottom:4px;}p{margin:4px 0;}');
-  win.document.write('</style></head><body>');
-  // Clone just the inner content (not the sticky topbar)
-  const contentEl = el.querySelector('#fm-panel-list') || el.querySelector('#prep-content') || el;
-  win.document.write(contentEl.innerHTML);
-  win.document.write('</body></html>');
-  win.document.close();
-  win.focus();
-  setTimeout(() => { win.print(); }, 600);
-}
+  // Data from server
+  var MOMENTS = ${fmJSON};
+  var DOCS    = ${docJSON};
+  var STORY   = ${storyJSON};
+  var FC      = ${fcJSON};
 
-// ── JUMP TO (offset for topbar) ──
-function jumpTo(id) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  const tb = document.querySelector('.topbar');
-  const offset = tb ? tb.offsetHeight + 16 : 68;
-  const y = el.getBoundingClientRect().top + window.pageYOffset - offset;
-  window.scrollTo({ top: y, behavior: 'smooth' });
-}
-
-// ── MODAL ──
-function openModal(title, bodyHTML) {
-  document.getElementById('modal-title').innerHTML = title;
-  document.getElementById('modal-body').innerHTML = bodyHTML;
-  document.getElementById('modal-overlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-function closeModal(e) {
-  if (!e || e.target === document.getElementById('modal-overlay')) {
-    document.getElementById('modal-overlay').classList.remove('open');
+  // ── Panels ──
+  function openPanel(id) {
+    closeAllPanels();
+    var el = document.getElementById(id);
+    if (el) { el.classList.add('open'); document.body.style.overflow = 'hidden'; el.scrollTop = 0; }
+  }
+  function closePanel(id) {
+    var el = document.getElementById(id);
+    if (el) el.classList.remove('open');
     document.body.style.overflow = '';
   }
-}
-
-// ── FM MODAL ──
-function openFMModal(idx) {
-  const fm = FRUITFUL_MOMENTS[idx];
-  if (!fm) { openGenericTransition(); return; }
-  openModal('🍎 ' + (fm.title || 'Fruitful Moment'), md2htmlClient(fm.content));
-}
-
-// ── GENERIC TRANSITION (when no FM available) ──
-function openGenericTransition() {
-  const ideas = [
-    '<strong>Clap the Beat:</strong> Clap a rhythm, children echo. Repeat 3 times, changing speed.',
-    '<strong>Body Freeze:</strong> Dance/move until teacher says a tree part — freeze in that shape.',
-    '<strong>Whisper Walk:</strong> Children stand, place hands on shoulders of person in front, whisper-walk to next area.',
-    '<strong>Counting Breath:</strong> Breathe in for 4 counts (roots pulling up water), out for 4 (leaves releasing air). Repeat 3 times.',
-    '<strong>Wonder Sentence:</strong> Each child says "I wonder..." before moving to next activity.'
-  ];
-  openModal('🍎 Transition Ideas', '<p style="margin-bottom:12px;color:#666;font-size:13px;">Use any of these quick transitions to move children between activities:</p><ul style="padding-left:20px;">' + ideas.map(i => '<li style="margin-bottom:10px;">' + i + '</li>').join('') + '</ul>');
-}
-
-// ── DOC MODAL ──
-function openDocModal() {
-  if (!DOC_EXAMPLES.length) {
-    openModal('📋 Documentation Examples', '<p style="color:#666;">Documentation examples from this lesson will appear here. Look for "Circle of Friends Scenario" sections in the generated content.</p>');
-    return;
+  function closeAllPanels() {
+    document.querySelectorAll('.page-panel').forEach(function(p){ p.classList.remove('open'); });
+    document.body.style.overflow = '';
   }
-  const body = DOC_EXAMPLES.map(d =>
-    '<div style="background:#E9D8FD;border-radius:8px;padding:14px;margin-bottom:12px;border-left:4px solid #553C9A;">' +
-    '<strong style="color:#553C9A;display:block;margin-bottom:8px;">' + d.title + '</strong>' +
-    md2htmlClient(d.content) + '</div>'
-  ).join('');
-  openModal('📋 Documentation Examples', body);
-}
 
-// ── STORY MODALS ──
-function openStoryModal(part) {
-  const labels = { before: '📖 Before Reading', during: '📖 During Reading — Pause Points', after: '📖 After Reading' };
-  const txt = STORY_PARTS[part];
-  let body;
-  if (txt && txt.trim().length > 20) {
-    body = md2htmlClient(txt);
-  } else if (STORY_PARTS.full && STORY_PARTS.full.trim().length > 20) {
-    // Show full story section with a note about which part was requested
-    body = '<div style="background:#FFF3E0;border-left:4px solid #F4A261;border-radius:0 8px 8px 0;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#774936;">' +
-      '📌 The <strong>' + labels[part] + '</strong> section is shown within the full Story Gathering content below.</div>' +
-      md2htmlClient(STORY_PARTS.full);
-  } else {
-    body = '<p style="color:#666;font-style:italic;">Story Gathering content will appear here once a lesson is generated. The generated content includes Before Reading, During Reading, and After Reading scripts.</p>';
+  // ── Print panel in new window ──
+  function printPanel(bodyId) {
+    var el = document.getElementById(bodyId);
+    if (!el) return;
+    var win = window.open('', '_blank', 'width=860,height=700');
+    win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Print</title>');
+    win.document.write('<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">');
+    win.document.write('<style>body{font-family:"Source Sans 3",sans-serif;padding:32px;font-size:14px;line-height:1.7;}');
+    win.document.write('.fm-card{background:#FFF8F0;border:2px solid #F4A261;border-radius:10px;padding:20px;margin-bottom:24px;page-break-inside:avoid;}');
+    win.document.write('.fm-card-hd{font-family:"Playfair Display",serif;color:#E76F51;font-size:17px;font-weight:700;margin-bottom:8px;}');
+    win.document.write('ul{padding-left:20px;}li{margin-bottom:4px;}p{margin:4px 0;}strong{font-weight:700;}');
+    win.document.write('</style></head><body>');
+    win.document.write(el.innerHTML);
+    win.document.write('</body></html>');
+    win.document.close();
+    setTimeout(function(){ win.focus(); win.print(); }, 700);
   }
-  openModal(labels[part] || 'Story Gathering', body);
-}
 
-// ── FAMILY CONNECTION ──
-function renderFamilyConnection() {
-  const el = document.getElementById('fc-display');
-  const qel = document.getElementById('fc-question');
-  if (!el) return;
-
-  // Parse the FC_DATA into display HTML
-  const text = FC_DATA || '';
-
-  // Extract conversation question if present
-  const qMatch = text.match(/Ask your child[^:]*[:]\s*[""]?([^""\n]+)/i) ||
-                 text.match(/conversation starter[^:]*[:]\s*([^\n]+)/i) ||
-                 text.match(/today[^\n]*\?\s*[""]([^""]+)/i);
-  const question = qMatch ? qMatch[1].trim() : 'What did you discover about trees today?';
-
-  // Build display
-  const lines = text.split('\n').filter(l => l.trim() && !l.match(/Ask your child/i) && !l.match(/conversation starter/i));
-  el.innerHTML = lines.map(l => {
-    l = l.trim();
-    if (l.startsWith('**') && l.endsWith('**')) return '<p><strong>' + l.replace(/\*\*/g, '') + '</strong></p>';
-    if (l.startsWith('- ') || l.startsWith('* ')) return '<li style="margin-left:20px;">' + l.slice(2).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') + '</li>';
-    return '<p>' + l.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') + '</p>';
-  }).join('');
-
-  if (qel) qel.innerHTML = '💬 <strong>Ask your child:</strong> "' + question + '"';
-}
-
-function copyFamilyConnection() {
-  const display = document.getElementById('fc-display');
-  const question = document.getElementById('fc-question');
-  const text = (display ? display.innerText : '') + '\n\n' + (question ? question.innerText : '');
-  const btn = document.getElementById('fc-copy-btn');
-  const msg = document.getElementById('fc-copied');
-
-  const doConfirm = () => {
-    if (btn) btn.style.display = 'none';
-    if (msg) { msg.style.display = 'inline'; }
-    setTimeout(() => {
-      if (btn) btn.style.display = '';
-      if (msg) msg.style.display = 'none';
-    }, 3000);
-  };
-
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(doConfirm).catch(() => fallbackCopy(text, doConfirm));
-  } else {
-    fallbackCopy(text, doConfirm);
+  // ── Jump to section ──
+  function jump(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var tb = document.querySelector('.topbar');
+    var offset = tb ? tb.offsetHeight + 14 : 66;
+    var y = el.getBoundingClientRect().top + window.pageYOffset - offset;
+    window.scrollTo({ top: y, behavior: 'smooth' });
   }
-}
-function fallbackCopy(text, cb) {
-  const ta = document.createElement('textarea');
-  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
-  document.body.appendChild(ta); ta.select();
-  try { document.execCommand('copy'); cb(); } catch(e) {}
-  document.body.removeChild(ta);
-}
 
-// ── FM PANEL ──
-function renderFMPanel() {
-  const el = document.getElementById('fm-panel-list');
-  if (!el) return;
-  if (!FRUITFUL_MOMENTS.length) {
-    el.innerHTML = '<p style="color:#666;">Fruitful Moments will appear here from your generated lesson content.</p>';
-    return;
+  // ── Modal ──
+  function openModal(title, bodyHTML) {
+    document.getElementById('modal-title').innerHTML = title;
+    document.getElementById('modal-body').innerHTML = bodyHTML;
+    document.getElementById('modal-bg').classList.add('open');
+    document.body.style.overflow = 'hidden';
   }
-  el.innerHTML = FRUITFUL_MOMENTS.map((fm, i) =>
-    '<div class="fm-card">' +
-    '<div class="fm-card-hd">🍎 ' + (fm.title || 'Fruitful Moment ' + (i + 1)) + '</div>' +
-    md2htmlClient(fm.content) +
-    '</div>'
-  ).join('');
-}
+  function closeModal(e) {
+    if (!e || e.target === document.getElementById('modal-bg')) {
+      document.getElementById('modal-bg').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+  }
 
-// ── CLIENT-SIDE MD → HTML ──
-function md2htmlClient(text) {
-  if (!text) return '';
-  return text
-    .replace(/\*\*TEACHER:\*\*\s*/g, '<span style="background:#1B4332;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:800;">TEACHER</span> ')
-    .replace(/\*\*CHILDREN:\*\*\s*/g, '<span style="background:#D4A017;color:#1A1A2E;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:800;">CHILDREN</span> ')
-    .replace(/\*\*([A-Z]{2,}):\*\*\s*/g, '<span style="background:#553C9A;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:800;">$1</span> ')
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/g, '<em style="color:#555;font-style:italic;">$1</em>')
-    .replace(/^#{1,4} (.+)$/gm, '<h4 style="color:#1B4332;font-family:serif;margin:12px 0 6px 0;">$1</h4>')
-    .replace(/^- (.+)$/gm, '<li style="margin-bottom:4px;">$1</li>')
-    .replace(/^\d+\. (.+)$/gm, '<li style="margin-bottom:6px;">$1</li>')
-    .split('\n\n').map(p => {
-      p = p.trim();
-      if (!p) return '';
-      if (p.startsWith('<')) return p;
-      return '<p style="margin:6px 0;">' + p + '</p>';
+  // ── FM Modal ──
+  function openFMModal(idx) {
+    var fm = MOMENTS[idx];
+    if (!fm) { openGenericTransition('Fruitful Moment Transition'); return; }
+    openModal('🍎 ' + (fm.title || 'Fruitful Moment'), renderMD(fm.content));
+  }
+  function openGenericTransition(label) {
+    var ideas = [
+      '<strong>Clap the Beat:</strong> Clap a rhythm — children echo. Repeat 3x, change speed.',
+      '<strong>Body Freeze:</strong> Move/dance until teacher names a tree part — freeze in that shape.',
+      '<strong>Whisper Walk:</strong> Hands on shoulders of person in front, whisper-walk to next area.',
+      '<strong>Counting Breath:</strong> Breathe in 4 counts (roots pulling up water), out 4 counts (leaves releasing air). 3 times.',
+      '<strong>Wonder Sentence:</strong> Each child says "I wonder..." before moving to the next activity.'
+    ];
+    openModal('🍎 ' + (label || 'Transition Ideas'),
+      '<p style="margin-bottom:12px;color:#666;font-size:13px;">Quick transitions to move between activities:</p>' +
+      '<ul style="padding-left:20px;">' + ideas.map(function(i){ return '<li style="margin-bottom:10px;">' + i + '</li>'; }).join('') + '</ul>');
+  }
+
+  // ── Doc Modal ──
+  function openDocModal() {
+    if (!DOCS.length) {
+      openModal('📋 Documentation Examples',
+        '<p style="color:#666;">Documentation examples will appear here from generated lesson content (Circle of Friends Scenarios).</p>'); return;
+    }
+    openModal('📋 Documentation Examples',
+      DOCS.map(function(d){
+        return '<div style="background:#E9D8FD;border-radius:8px;padding:14px;margin-bottom:12px;border-left:4px solid #553C9A;">' +
+          '<strong style="color:#553C9A;display:block;margin-bottom:8px;">' + d.title + '</strong>' +
+          renderMD(d.content) + '</div>';
+      }).join(''));
+  }
+
+  // ── Story Modal ──
+  function openStoryModal(part) {
+    var labels = { before:'📖 Before Reading', during:'📖 During Reading — Pause Points', after:'📖 After Reading' };
+    var txt = STORY[part];
+    var body;
+    if (txt && txt.trim().length > 30) {
+      body = renderMD(txt);
+    } else if (STORY.full && STORY.full.trim().length > 30) {
+      body = '<div style="background:#FFF3E0;border-left:4px solid #F4A261;border-radius:0 8px 8px 0;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#774936;">' +
+        '📌 Showing full Story Gathering content — look for the <strong>' + (labels[part]||part) + '</strong> section within.</div>' +
+        renderMD(STORY.full);
+    } else {
+      body = '<p style="color:#666;font-style:italic;">Story Gathering content will appear here after lesson generation. It includes Before Reading, During Reading, and After Reading scripts.</p>';
+    }
+    openModal(labels[part] || 'Story Gathering', body);
+  }
+
+  // ── Family Connection ──
+  function renderFC() {
+    var bodyEl = document.getElementById('fc-body');
+    var qEl    = document.getElementById('fc-question');
+    if (!bodyEl) return;
+    var text = FC || '';
+    var qMatch = text.match(/Ask your child[^:]*:?\\s*["""]?([^"""\\n]{10,})/i) ||
+                 text.match(/💬[^:]*:\\s*["""]([^"""]+)/i);
+    var question = qMatch ? qMatch[1].replace(/["""]/g,'').trim() : 'What did you discover about trees today?';
+    var lines = text.split('\\n');
+    var html = lines.map(function(l){
+      l = l.trim();
+      if (!l || l.match(/^Ask your child/i) || l.match(/^💬/)) return '';
+      if (l.startsWith('- ') || l.startsWith('* ')) return '<li style="margin-left:20px;">' + l.slice(2).replace(/\\*\\*(.*?)\\*\\*/g,'<strong>$1</strong>') + '</li>';
+      return '<p>' + l.replace(/\\*\\*(.*?)\\*\\*/g,'<strong>$1</strong>') + '</p>';
+    }).filter(Boolean).join('');
+    bodyEl.innerHTML = html;
+    if (qEl) qEl.innerHTML = '💬 <strong>Ask your child:</strong> "' + question + '"';
+  }
+
+  function copyFC() {
+    var bodyEl = document.getElementById('fc-body');
+    var qEl    = document.getElementById('fc-question');
+    var btn    = document.getElementById('fc-copy-btn');
+    var msg    = document.getElementById('fc-copied');
+    var text   = (bodyEl ? bodyEl.innerText : '') + '\\n\\n' + (qEl ? qEl.innerText : '');
+    var confirm = function() {
+      if (btn) btn.style.display = 'none';
+      if (msg) msg.style.display = 'inline';
+      setTimeout(function(){ if (btn) btn.style.display=''; if (msg) msg.style.display='none'; }, 3000);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(confirm).catch(function(){ fallbackCopy(text, confirm); });
+    } else { fallbackCopy(text, confirm); }
+  }
+  function fallbackCopy(text, cb) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.cssText = 'position:fixed;opacity:0;';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); cb(); } catch(e) {}
+    document.body.removeChild(ta);
+  }
+
+  // ── FM Panel cards ──
+  function renderFMPanel() {
+    var el = document.getElementById('fm-cards-list');
+    if (!el) return;
+    if (!MOMENTS.length) {
+      el.innerHTML = '<p style="color:#666;">Fruitful Moments will appear here from generated lesson content.</p>'; return;
+    }
+    el.innerHTML = MOMENTS.map(function(fm, i){
+      return '<div class="fm-card"><div class="fm-card-hd">🍎 ' + (fm.title||'Fruitful Moment '+(i+1)) + '</div>' + renderMD(fm.content) + '</div>';
     }).join('');
-}
+  }
 
-// ── INIT ──
-document.addEventListener('DOMContentLoaded', function() {
-  renderFMPanel();
-  renderFamilyConnection();
-});
+  // ── Lightweight MD renderer (client-side) ──
+  function renderMD(text) {
+    if (!text) return '';
+    return text
+      .replace(/\\*\\*TEACHER:\\*\\*\\s*/g, '<span style="background:#1B4332;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:800;white-space:nowrap;">TEACHER</span> ')
+      .replace(/\\*\\*CHILDREN:\\*\\*\\s*/g, '<span style="background:#D4A017;color:#1A1A2E;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:800;white-space:nowrap;">CHILDREN</span> ')
+      .replace(/\\*\\*([A-Z]{2,}):\\*\\*\\s*/g, '<span style="background:#553C9A;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:800;white-space:nowrap;">$1</span> ')
+      .replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>')
+      .replace(/\\*(.*?)\\*/g, '<em style="color:#555;font-style:italic;">$1</em>')
+      .replace(/^#{1,4} (.+)$/gm, '<h4 style="color:#1B4332;font-family:serif;margin:12px 0 6px;">$1</h4>')
+      .replace(/^- (.+)$/gm, '<li style="margin-bottom:4px;">$1</li>')
+      .replace(/^\\d+\\. (.+)$/gm, '<li style="margin-bottom:6px;">$1</li>')
+      .split('\\n\\n').map(function(p){
+        p = p.trim(); if (!p) return '';
+        if (p.startsWith('<')) return p;
+        return '<p style="margin:5px 0;">' + p + '</p>';
+      }).join('');
+  }
+
+  // ── INIT ──
+  document.addEventListener('DOMContentLoaded', function() {
+    renderFMPanel();
+    renderFC();
+  });
+
+  // Public API
+  return {
+    openPanel: openPanel, closePanel: closePanel,
+    printPanel: printPanel, jump: jump,
+    openModal: openModal, closeModal: closeModal,
+    openFMModal: openFMModal, openGenericTransition: openGenericTransition,
+    openDocModal: openDocModal, openStoryModal: openStoryModal,
+    copyFC: copyFC
+  };
+})();
 </script>
 </body>
 </html>`;
