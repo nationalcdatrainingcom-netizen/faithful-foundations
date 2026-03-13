@@ -108,6 +108,50 @@
   .dot-approved { background: var(--gold); }
   .dot-draft { background: #aaa; }
   .dot-missing { background: #eee; }
+  .day-optional { border-top: 3px solid #9B59B6; }
+  .day-optional-badge { font-size: 10px; color: #9B59B6; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; }
+
+  /* WEEKLY RESOURCES */
+  .weekly-resources { margin-bottom: 28px; }
+  .wr-title { font-size: 18px; font-weight: 700; color: var(--green); margin-bottom: 16px; font-family: inherit; display: flex; align-items: center; gap: 8px; }
+  .wr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+  .wr-card { background: var(--white); border-radius: 10px; padding: 20px; box-shadow: var(--shadow); border-top: 4px solid var(--green); }
+  .wr-card-title { font-size: 14px; font-weight: 700; color: var(--green); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .wr-card-desc { font-size: 12px; color: var(--text-light); margin-bottom: 12px; line-height: 1.5; }
+  .wr-card.orange { border-top-color: #E76F51; }
+  .wr-card.orange .wr-card-title { color: #E76F51; }
+  .wr-card.blue { border-top-color: #2B6CB0; }
+  .wr-card.blue .wr-card-title { color: #2B6CB0; }
+  .wr-card.gold { border-top-color: var(--gold); }
+  .wr-card.gold .wr-card-title { color: var(--brown); }
+  .wr-card.purple { border-top-color: #553C9A; }
+  .wr-card.purple .wr-card-title { color: #553C9A; }
+  .wr-print-btn { padding: 7px 16px; border: none; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; transition: .2s; }
+  .wr-print-btn.green { background: var(--green); color: white; }
+  .wr-print-btn.orange { background: #E76F51; color: white; }
+  .wr-print-btn.blue { background: #2B6CB0; color: white; }
+  .wr-print-btn.gold { background: var(--gold); color: white; }
+  .wr-print-btn.purple { background: #553C9A; color: white; }
+
+  /* PRINTABLE RESOURCES (hidden on screen, shown when print panel active) */
+  .print-resource-panel { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: white; z-index: 2000; overflow-y: auto; padding: 40px; }
+  .print-resource-panel.active { display: block; }
+  .print-panel-close { position: fixed; top: 16px; right: 24px; background: var(--green); color: white; border: none; border-radius: 8px; padding: 8px 18px; font-size: 14px; cursor: pointer; font-weight: 700; z-index: 2001; }
+  .print-panel-print { position: fixed; top: 16px; right: 150px; background: var(--gold); color: white; border: none; border-radius: 8px; padding: 8px 18px; font-size: 14px; cursor: pointer; font-weight: 700; z-index: 2001; }
+  .cb-center-card { background: #F0FFF4; border: 2px solid var(--green); border-radius: 12px; padding: 24px; margin-bottom: 24px; page-break-inside: avoid; }
+  .cb-center-name { font-size: 18px; font-weight: 700; color: var(--green); margin-bottom: 6px; }
+  .cb-center-week { font-size: 12px; color: var(--text-light); margin-bottom: 14px; }
+  .cb-questions { list-style: none; padding: 0; }
+  .cb-questions li { padding: 8px 12px 8px 32px; position: relative; border-bottom: 1px solid #C6F6D5; font-size: 14px; line-height: 1.6; }
+  .cb-questions li::before { content: "?"; position: absolute; left: 8px; color: var(--green); font-weight: 900; font-size: 16px; }
+  .fm-print-card { background: linear-gradient(135deg, #FFF8F0, #FFF3E0); border: 2px solid #F4A261; border-radius: 12px; padding: 24px; margin-bottom: 24px; page-break-inside: avoid; }
+  .fm-print-title { font-size: 17px; font-weight: 700; color: #E76F51; margin-bottom: 12px; }
+  .prayer-card { background: linear-gradient(135deg, #F0FFF4, #E8F5E9); border: 2px solid var(--green); border-radius: 12px; padding: 24px; margin-bottom: 20px; page-break-inside: avoid; text-align: center; }
+  .prayer-day { font-size: 12px; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .prayer-text { font-size: 16px; line-height: 1.8; color: var(--green); font-style: italic; font-weight: 600; }
+  .setup-area-card { background: #EBF8FF; border: 2px solid #90CDF4; border-radius: 12px; padding: 20px; margin-bottom: 20px; page-break-inside: avoid; }
+  .setup-area-name { font-size: 16px; font-weight: 700; color: #2B6CB0; margin-bottom: 8px; }
+  @media print { .print-panel-close, .print-panel-print { display: none !important; } }
 
   /* LESSON VIEWER */
   .lesson-header { background: var(--green); color: var(--white); border-radius: 10px; padding: 24px; margin-bottom: 20px; }
@@ -221,6 +265,7 @@
         <div class="week-tabs" id="weekTabs"></div>
         <div class="age-tabs" id="ageTabs"></div>
         <div class="weekly-grid" id="weeklyGrid"></div>
+        <div id="weeklyResources"></div>
         <div id="lessonPanel"></div>
       </div>
       
@@ -432,25 +477,248 @@ function renderWeeklyGrid(weekLessons) {
   const grid = document.getElementById('weeklyGrid');
   const filtered = weekLessons.filter(l => l.age_band === currentAgeBand);
   const startDay = (currentWeek - 1) * 5 + 1;
-  
+  const isOptionalWeek = currentWeek === 5;
+
   grid.innerHTML = Array.from({length: 5}, (_, i) => {
     const dayNum = startDay + i;
+    const isOptional = dayNum >= 21;
     const lesson = filtered.find(l => l.day_number === dayNum);
     if (!lesson) {
-      return `<div class="day-card missing">
-        <div class="day-label">${DAY_LABELS[i]} · Day ${dayNum}</div>
-        <div class="day-focus" style="color:#aaa; font-size:12px;">Not yet available</div>
+      return `<div class="day-card missing ${isOptional ? 'day-optional' : ''}">
+        ${isOptional ? '<div class="day-optional-badge">★ Optional</div>' : ''}
+        <div class="day-label">Day ${dayNum}</div>
+        <div class="day-focus" style="color:#aaa; font-size:12px;">Not yet generated</div>
         ${isAdmin() ? `<button class="btn btn-sm btn-outline" style="margin-top:8px;" onclick="openGenerator(${dayNum})">+ Generate</button>` : ''}
       </div>`;
     }
     const dotClass = { published:'dot-published', approved:'dot-approved', draft:'dot-draft' }[lesson.status] || 'dot-missing';
-    return `<div class="day-card ${lesson.status}" onclick="openLesson('${lesson.id}')">
-      <div class="day-label"><span class="day-status-dot ${dotClass}"></span>${DAY_LABELS[i]} · Day ${dayNum}</div>
+    return `<div class="day-card ${lesson.status} ${isOptional ? 'day-optional' : ''}" onclick="openLesson('${lesson.id}')">
+      ${isOptional ? '<div class="day-optional-badge">★ Optional / Bonus Day</div>' : ''}
+      <div class="day-label"><span class="day-status-dot ${dotClass}"></span>Day ${dayNum}</div>
       <div class="day-focus">${lesson.focus}</div>
       <div class="day-fruit">🍎 ${lesson.fruit_of_spirit || ''}</div>
       ${lesson.lets_think ? `<div style="font-size:11px; color:var(--text-light); margin-top:6px; font-style:italic;">"${lesson.lets_think.substring(0,60)}${lesson.lets_think.length > 60 ? '...' : ''}"</div>` : ''}
     </div>`;
   }).join('');
+
+  renderWeeklyResources(weekLessons, startDay);
+}
+
+// ============================================================
+// WEEKLY RESOURCES PANEL
+// ============================================================
+const MEALTIME_PRAYERS_LIST = [
+  { days: 'Day 1 & 6', text: 'For food to eat and friends so dear,\nFor loving hands that brought it here,\nFor eyes to see and hearts that sing,\nWe thank You, God, for everything. Amen.' },
+  { days: 'Day 2 & 7', text: 'God is great, God is good,\nLet us thank Him for our food.\nBy His hands we all are fed,\nGive us, Lord, our daily bread. Amen.' },
+  { days: 'Day 3 & 8', text: 'Little seeds grow big and tall,\nGod takes care of one and all.\nThank You for this food today,\nBless our friends as we eat and play. Amen.' },
+  { days: 'Day 4 & 9', text: 'Thank You for the trees so tall,\nThank You for the rain that falls,\nThank You for the food we eat,\nEvery bite is made complete. Amen.' },
+  { days: 'Day 5 & 10', text: 'Gentle hands and thankful hearts,\nBless this food before we start.\nThank You, God, for loving care,\nBlessings on the food we share. Amen.' }
+];
+
+const CURIOSITY_BUILDERS_INTRO = `Curiosity Builders are open-ended questions and teacher prompts designed to spark wonder, investigation, and deep thinking in children. They are not test questions — there are no right or wrong answers. Print one card per learning center and tape it to the wall or place it in the area at children's eye level (or teacher-accessible height). Read them aloud, invite wondering, and listen. The goal is to follow the child's thinking and extend it naturally.`;
+
+function renderWeeklyResources(weekLessons, startDay) {
+  const el = document.getElementById('weeklyResources');
+  const filtered = weekLessons.filter(l => l.age_band === currentAgeBand);
+  const weekFruit = filtered.length ? (filtered[0].fruit_of_spirit || '') : '';
+  const weekNum = currentWeek;
+  const isOptionalWeek = weekNum === 5;
+
+  // Week prayers = days startDay through startDay+4
+  const weekPrayers = MEALTIME_PRAYERS_LIST.filter((p, i) => {
+    // Week 1: prayers 0-4, Week 2: same prayers repeat
+    return true; // All 5 rotate each week
+  });
+
+  el.innerHTML = `
+  <!-- PRINT PANELS (hidden overlays) -->
+  <div class="print-resource-panel" id="printPanel-cb">
+    <button class="print-panel-close" onclick="closePrintPanel('printPanel-cb')">✕ Close</button>
+    <button class="print-panel-print" onclick="window.print()">🖨️ Print</button>
+    <div id="printPanel-cb-content"></div>
+  </div>
+  <div class="print-resource-panel" id="printPanel-fm">
+    <button class="print-panel-close" onclick="closePrintPanel('printPanel-fm')">✕ Close</button>
+    <button class="print-panel-print" onclick="window.print()">🖨️ Print</button>
+    <div id="printPanel-fm-content"></div>
+  </div>
+  <div class="print-resource-panel" id="printPanel-prayers">
+    <button class="print-panel-close" onclick="closePrintPanel('printPanel-prayers')">✕ Close</button>
+    <button class="print-panel-print" onclick="window.print()">🖨️ Print</button>
+    <div id="printPanel-prayers-content"></div>
+  </div>
+  <div class="print-resource-panel" id="printPanel-setup">
+    <button class="print-panel-close" onclick="closePrintPanel('printPanel-setup')">✕ Close</button>
+    <button class="print-panel-print" onclick="window.print()">🖨️ Print</button>
+    <div id="printPanel-setup-content"></div>
+  </div>
+
+  <div class="weekly-resources">
+    <div class="wr-title">
+      📦 Week ${weekNum} Resources
+      ${isOptionalWeek ? '<span style="font-size:13px;color:#9B59B6;font-weight:700;">&nbsp;★ Optional / Bonus Week</span>' : ''}
+      <span style="font-size:13px;color:var(--text-light);font-weight:400;">—&nbsp;Fruit of the Spirit: <strong style="color:var(--gold)">${weekFruit}</strong></span>
+    </div>
+    <div class="wr-grid">
+
+      <div class="wr-card">
+        <div class="wr-card-title">🌱 Curiosity Builders</div>
+        <div class="wr-card-desc">Open-ended questions for each learning center — print and post in areas so teachers can inspire wondering. One set covers the full week.</div>
+        <button class="wr-print-btn green" onclick="openCuriosityBuilders(${weekNum})">📋 View &amp; Print Curiosity Builders</button>
+      </div>
+
+      <div class="wr-card orange">
+        <div class="wr-card-title">🍎 Fruitful Moments</div>
+        <div class="wr-card-desc">All Fruitful Moments for this week — print and post in the Discovery Circle area for easy reference during transitions and gatherings.</div>
+        <button class="wr-print-btn orange" onclick="openFruitfulMoments(${weekNum})">📋 View &amp; Print Fruitful Moments</button>
+      </div>
+
+      <div class="wr-card gold">
+        <div class="wr-card-title">🙏 Mealtime Prayers</div>
+        <div class="wr-card-desc">All 5 rotating mealtime prayers — print and display in your meal areas. Rotate daily so children learn them all over the week.</div>
+        <button class="wr-print-btn gold" onclick="openMealtimePrayers(${weekNum})">📋 View &amp; Print Prayers</button>
+      </div>
+
+      <div class="wr-card blue">
+        <div class="wr-card-title">🎨 Choice Time Area Setup</div>
+        <div class="wr-card-desc">Materials and setup for all Choice Time learning centers this week. Prepare areas before children arrive.</div>
+        <button class="wr-print-btn blue" onclick="openAreaSetup(${weekNum})">📋 View &amp; Print Area Setup</button>
+      </div>
+
+    </div>
+  </div>`;
+}
+
+function openCuriosityBuilders(weekNum) {
+  const centers = [
+    { name: 'Science & Discovery', icon: '🔬', color: '#2D6A4F' },
+    { name: 'Art Studio', icon: '🎨', color: '#E76F51' },
+    { name: 'Building & Construction', icon: '🏗️', color: '#2B6CB0' },
+    { name: 'Literacy & Writing', icon: '📚', color: '#553C9A' },
+    { name: 'Math & Manipulatives', icon: '🔢', color: '#D4A017' },
+    { name: 'Dramatic Play', icon: '🎭', color: '#774936' },
+    { name: 'Sensory Table', icon: '✋', color: '#2D6A4F' },
+    { name: 'Outdoor Exploration', icon: '🌿', color: '#1B4332' }
+  ];
+
+  const genericQuestions = {
+    'Science & Discovery': ['What do you notice about this?', 'What do you wonder about what you see?', 'What do you think would happen if...?', 'How does this feel/smell/look different from...?', 'What questions do you have about this?'],
+    'Art Studio': ['What are you making? Tell me about it.', 'What do you notice when you mix these colors?', 'How did you decide to make it this way?', 'What would happen if you used more of...?', 'What does this remind you of?'],
+    'Building & Construction': ['What are you building? What will it do?', 'What would make it stronger?', 'What happens if you change this part?', 'How did you figure that out?', 'What do you think would happen if it fell?'],
+    'Literacy & Writing': ['What story does this picture tell you?', 'What do you notice about the letters/words?', 'If you could write anything, what would it say?', 'What do you think happens next in this book?', 'What does this word make you think of?'],
+    'Math & Manipulatives': ['How could you sort these in a different way?', 'How many do you think there are — how could we find out?', 'What pattern do you see?', 'What is the same? What is different?', 'How could you make them equal?'],
+    'Dramatic Play': ['What is happening in your story?', 'What does your character need?', 'How could your character solve that problem?', 'What would happen next in your story?', 'How is your character feeling?'],
+    'Sensory Table': ['What do you notice when you touch it?', 'How does it feel different from...?', 'What do you wonder about what you\'re feeling?', 'What do you think is inside?', 'What happens when you...?'],
+    'Outdoor Exploration': ['What do you notice about this tree/plant/animal?', 'What do you think it needs to live?', 'What changes have you noticed outside?', 'What would happen if...?', 'What does this remind you of from inside the classroom?']
+  };
+
+  const html = `<div style="font-family:'Source Sans 3',Arial,sans-serif;max-width:800px;margin:0 auto;">
+    <div style="text-align:center;margin-bottom:32px;border-bottom:3px solid #1B4332;padding-bottom:20px;">
+      <div style="font-size:28px;margin-bottom:6px;">🌱</div>
+      <h1 style="font-size:22px;color:#1B4332;margin-bottom:8px;">Curiosity Builders — Week ${weekNum}</h1>
+      <p style="font-size:13px;color:#4A5568;max-width:560px;margin:0 auto;line-height:1.6;">${CURIOSITY_BUILDERS_INTRO}</p>
+    </div>
+    ${centers.map(c => `
+    <div class="cb-center-card">
+      <div class="cb-center-name">${c.icon} ${c.name}</div>
+      <div class="cb-center-week" style="color:${c.color};">Week ${weekNum} · Exploring Trees · Fruit: Love, Joy, Peace, Patience, Kindness</div>
+      <ul class="cb-questions">
+        <li style="font-weight:700;color:${c.color};">How is a tree like our Circle of Friends?</li>
+        <li>What parts of a tree can you find here?</li>
+        ${(genericQuestions[c.name] || []).map(q => `<li>${q}</li>`).join('')}
+        <li style="font-style:italic;color:#666;">✝ I wonder... what did God have in mind when He made trees?</li>
+      </ul>
+    </div>`).join('')}
+  </div>`;
+
+  document.getElementById('printPanel-cb-content').innerHTML = html;
+  document.getElementById('printPanel-cb').classList.add('active');
+}
+
+function openFruitfulMoments(weekNum) {
+  const moments = [
+    { name: 'Rooted & Growing', steps: ['Stand tall like a tree trunk — feet together, arms at sides.', 'Slowly reach arms up and out like branches growing.', '"We are rooted in love — growing stronger every day!"', 'Wiggle fingers like leaves in the breeze.', 'Say together: "Strong roots, tall tree, that\'s you and that\'s me!"'], use: 'Opening Discovery Circle or any transition' },
+    { name: 'Leaf Counting Chant', steps: ['Hold up both hands, fingers spread wide.', 'Count each finger: "One leaf, two leaves, three leaves, four..."', 'Wave both hands overhead: "...so many leaves, let\'s count some more!"', 'Clap the rhythm together.', 'Repeat 2-3 times, speeding up each round.'], use: 'Transition from Choice Time to Story Gathering' },
+    { name: 'Tree Parts Body Freeze', steps: ['"When I say ROOTS — touch your feet!"', '"When I say TRUNK — wrap your arms around yourself!"', '"When I say BRANCHES — stretch your arms wide!"', '"When I say LEAVES — wiggle your fingers high!"', 'Call out parts in random order, freeze between each one.'], use: 'Transition to Outdoor Time or cleanup signal' },
+    { name: 'Circle of Friends Tree Song', steps: ['Stand in a circle holding hands.', '"We\'re a forest, we\'re a team — strongest when our roots are seen!"', 'Gently sway together left and right.', '"Each one different, each one bright — every tree is just right!"', 'Squeeze hands gently and bow.'], use: 'Closing Reflection Time' },
+    { name: 'Whisper Wonder', steps: ['Come close together in a small circle.', 'Teacher whispers: "I wonder... [today\'s wonder question]"', 'Each child whispers something they wonder to the person next to them.', '"All our wondering — that\'s how we grow!"', 'End with quiet hands on hearts.'], use: 'Heart Moment transition or end of Discovery Circle' }
+  ];
+
+  const html = `<div style="font-family:'Source Sans 3',Arial,sans-serif;max-width:700px;margin:0 auto;">
+    <div style="text-align:center;margin-bottom:28px;border-bottom:3px solid #E76F51;padding-bottom:18px;">
+      <div style="font-size:28px;margin-bottom:6px;">🍎</div>
+      <h1 style="font-size:22px;color:#E76F51;margin-bottom:6px;">Fruitful Moments — Week ${weekNum}</h1>
+      <p style="font-size:12px;color:#4A5568;">Post in the Discovery Circle area. Use for transitions and gatherings throughout each day.</p>
+    </div>
+    ${moments.map((m, i) => `
+    <div class="fm-print-card">
+      <div class="fm-print-title">🍎 ${m.name}</div>
+      <div style="font-size:11px;color:#E76F51;margin-bottom:10px;font-weight:700;">USE FOR: ${m.use}</div>
+      <ol style="padding-left:20px;font-size:14px;line-height:1.8;">
+        ${m.steps.map(s => `<li style="margin-bottom:4px;">${s}</li>`).join('')}
+      </ol>
+    </div>`).join('')}
+  </div>`;
+
+  document.getElementById('printPanel-fm-content').innerHTML = html;
+  document.getElementById('printPanel-fm').classList.add('active');
+}
+
+function openMealtimePrayers(weekNum) {
+  const html = `<div style="font-family:'Source Sans 3',Arial,sans-serif;max-width:600px;margin:0 auto;">
+    <div style="text-align:center;margin-bottom:28px;border-bottom:3px solid #1B4332;padding-bottom:18px;">
+      <div style="font-size:28px;margin-bottom:6px;">🙏</div>
+      <h1 style="font-size:22px;color:#1B4332;margin-bottom:6px;">Mealtime Prayers</h1>
+      <p style="font-size:12px;color:#4A5568;">Print and display in your meal areas. Rotate daily — children learn all five over time.<br>These are gentle, invitational — always offered, never required.</p>
+    </div>
+    ${MEALTIME_PRAYERS_LIST.map((p, i) => `
+    <div class="prayer-card">
+      <div class="prayer-day">${p.days} · Week ${weekNum}</div>
+      <div class="prayer-text">${p.text.replace(/\n/g, '<br>')}</div>
+    </div>`).join('')}
+  </div>`;
+
+  document.getElementById('printPanel-prayers-content').innerHTML = html;
+  document.getElementById('printPanel-prayers').classList.add('active');
+}
+
+function openAreaSetup(weekNum) {
+  const areas = [
+    { name: 'Science & Discovery', icon: '🔬', materials: ['Magnifying glasses (1 per child)', 'Tree bark rubbings paper + crayons', 'Leaves of varying sizes and shapes', 'A section of real tree branch', 'Soil samples in small trays', 'Tree identification cards (laminated)', 'Clipboards and simple recording sheets'], setup: 'Arrange materials at center table or shelf. Place branch piece centrally. Have magnifiers available at each spot. Post Curiosity Builders card at child eye level.' },
+    { name: 'Art Studio', icon: '🎨', materials: ['Green, brown, and earth-tone paint (tempera)', 'Leaf sponges and real leaves for printing', 'Large paper for class mural', 'Collage materials (bark, seeds, torn paper)', 'Tree journal pages for individual use', 'Markers and colored pencils'], setup: 'Cover table with butcher paper. Set paint in trays with sponges. Display a leaf print example at center. Place individual journals in a basket.' },
+    { name: 'Building & Construction', icon: '🏗️', materials: ['Unit blocks and large cardboard tubes', 'Small world figures (animals, people)', 'Green foam/fabric for "leaves"', 'Brown construction paper for trunks', 'String and tape', 'Forest scene backdrop (optional)'], setup: 'Clear floor space for large building. Set out materials in open bins. Display a simple tree diagram for inspiration. Leave space for child-created forests.' },
+    { name: 'Dramatic Play', icon: '🎭', materials: ['Tree costume elements (leaf headbands)', 'Woodland animal puppets', 'Acorn and leaf props', 'Forest animal books and cards', 'Recording "log" (notebook)', '"Tree house" prop corner'], setup: 'Create a "forest corner" with fabric or paper trees. Place props in accessible baskets. Post the scenario starter: "You are animals who live in a tree..."' },
+    { name: 'Sensory Table', icon: '✋', materials: ['Soil or kinetic sand', 'Small stones, pebbles, and bark pieces', 'Plastic tree and animal figures', 'Measuring cups and scoops', 'Small shovels/trowels', 'Water source if doing wet sensory'], setup: 'Fill table with soil mixture. Bury small items for discovery. Set tools at side. Post a "What do you notice?" prompt card.' }
+  ];
+
+  const html = `<div style="font-family:'Source Sans 3',Arial,sans-serif;max-width:720px;margin:0 auto;">
+    <div style="text-align:center;margin-bottom:28px;border-bottom:3px solid #2B6CB0;padding-bottom:18px;">
+      <div style="font-size:28px;margin-bottom:6px;">🎨</div>
+      <h1 style="font-size:22px;color:#2B6CB0;margin-bottom:6px;">Choice Time Area Setup — Week ${weekNum}</h1>
+      <p style="font-size:12px;color:#4A5568;">Prepare all areas before children arrive. Materials listed support the full week — refresh as needed daily.</p>
+    </div>
+    ${areas.map(a => `
+    <div class="setup-area-card">
+      <div class="setup-area-name">${a.icon} ${a.name}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;font-size:13px;line-height:1.7;">
+        <div>
+          <strong style="color:#2B6CB0;display:block;margin-bottom:6px;">Materials Needed</strong>
+          <ul style="padding-left:18px;margin:0;">${a.materials.map(m => `<li>${m}</li>`).join('')}</ul>
+        </div>
+        <div>
+          <strong style="color:#2B6CB0;display:block;margin-bottom:6px;">Setup Instructions</strong>
+          <p style="margin:0;">${a.setup}</p>
+        </div>
+      </div>
+    </div>`).join('')}
+  </div>`;
+
+  document.getElementById('printPanel-setup-content').innerHTML = html;
+  document.getElementById('printPanel-setup').classList.add('active');
+}
+
+function closePrintPanel(id) {
+  document.getElementById(id).classList.remove('active');
 }
 
 // ============================================================
