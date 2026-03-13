@@ -229,25 +229,35 @@ function spanishPron(word) {
   return map[lower] || null;
 }
 
-// ── FM TRANSITION BUTTON HTML ──
+// ── FM TRANSITION BUTTON HTML — shows ONE activity ──
 function fmBtn(fruitfulMoments, idx, label) {
   const fm = fruitfulMoments[idx];
   if (fm) {
+    // Extract the first complete activity from the FM content (up to first double-newline or 250 chars)
+    const preview = (fm.title || label || 'Fruitful Moment');
     return `<button class="fm-transition-btn" onclick="FF.openFMModal(${idx})">
       <span style="font-size:20px;">🍎</span>
       <div style="flex:1;">
-        <div class="fm-tb-title">${fm.title || label || 'Fruitful Moment'}</div>
-        <div class="fm-tb-hint">Tap to open full transition activity</div>
+        <div class="fm-tb-title">${preview}</div>
+        <div class="fm-tb-hint">Tap to open transition activity</div>
       </div>
       <span class="fm-tb-arrow">▶</span>
     </button>`;
   }
-  // Generic fallback
+  // Generic fallback — ONE pre-selected activity per transition context
+  const singles = {
+    'Transition to Choice Time':    '<strong>Plan Whisper:</strong> Each child whispers to the teacher one thing they plan to do in Choice Time, then walks quietly to their first area.',
+    'Transition to Story Gathering':'<strong>Leaf Shape:</strong> Children make a leaf shape with their hands, hold it up, then "float" like a falling leaf to the Story Gathering spot.',
+    'Transition to Skill Builders': '<strong>Tree Freeze:</strong> Move and dance until the teacher calls out a tree part — everyone freezes in that shape, then walks to Skill Builders.',
+    'Transition to Outdoor Time':   '<strong>Counting Breath:</strong> Breathe in 4 counts (roots pulling water up), out 4 counts (leaves releasing air). Three times, then line up.',
+    'Transition to Reflection Time':'<strong>Wonder Sentence:</strong> Before sitting, each child completes "I wonder..." — hold that thought for Reflection Time.',
+  };
+  const activity = singles[label] || '<strong>Whisper Walk:</strong> Hands on shoulders of the person in front, whisper-walk quietly to the next activity.';
   return `<button class="fm-transition-btn" onclick="FF.openGenericTransition('${(label || 'Transition').replace(/'/g, '\\u0027')}')">
     <span style="font-size:20px;">🍎</span>
     <div style="flex:1;">
       <div class="fm-tb-title">${label || 'Fruitful Moment Transition'}</div>
-      <div class="fm-tb-hint">Tap for transition ideas</div>
+      <div class="fm-tb-hint">Tap to open transition activity</div>
     </div>
     <span class="fm-tb-arrow">▶</span>
   </button>`;
@@ -277,7 +287,27 @@ async function buildLessonPage(lesson) {
   const dayNum = lesson.day_number || 1;
   const isOptional = dayNum >= 21;
   const vocab = lesson.vocabulary_word || '';
-  const spanishVocabWord = lesson.spanish_vocabulary || '';
+  // Spanish word: use db field first; fall back to extracting from lesson content
+  let spanishVocabWord = lesson.spanish_vocabulary || '';
+  if (!spanishVocabWord && vocab) {
+    // Try to find "Spanish: X" or "En Español: X" or "Árbol" pattern in header block
+    const hdr = getSection(content.split ? {hdr: content} : {}, 'HEADER BLOCK', '1. HEADER BLOCK') || content;
+    const esMatch = hdr.match(/[Ee]n [Ee]spa[ñn]ol[:\s]+([A-Za-zÁáÉéÍíÓóÚúÜüÑñ]+)/i) ||
+                    hdr.match(/Spanish[:\s]+([A-Za-zÁáÉéÍíÓóÚúÜüÑñ]+)/i) ||
+                    content.match(/Vocabulary[^:]*:\s*[^\n]*\(([A-Za-zÁáÉéÍíÓóÚúÜüÑñ]+)\)/i);
+    if (esMatch) spanishVocabWord = esMatch[1];
+  }
+  // Last resort: look up from our known map
+  if (!spanishVocabWord && vocab) {
+    const knownEs = {
+      'tree':'Árbol','roots':'Raíces','trunk':'Tronco','branches':'Ramas','leaves':'Hojas',
+      'bark':'Corteza','seeds':'Semillas','fruit':'Fruta','sunlight':'Sol','water':'Agua',
+      'forest':'Bosque','soil':'Tierra','canopy':'Dosel','shelter':'Refugio','grow':'Crecer',
+      'seasons':'Estaciones','change':'Cambio','observe':'Observar','compare':'Comparar','wonder':'Asombro',
+      'community':'Comunidad','growth':'Crecimiento','unique':'Único','connected':'Conectado'
+    };
+    spanishVocabWord = knownEs[vocab.toLowerCase()] || '';
+  }
   const pronHint = spanishPron(spanishVocabWord);
 
   // Section content
@@ -491,7 +521,6 @@ ul{padding-left:20px;margin:6px 0;}li{padding:3px 0;}p{margin:5px 0;}
   <div class="topbar-btns">
     <button class="tbtn tbtn-back" onclick="window.history.back()">← Back</button>
     <button class="tbtn tbtn-prep" onclick="FF.openPanel('panel-prep')">📋 Prep</button>
-    <button class="tbtn tbtn-fm" onclick="FF.openPanel('panel-fm')">🍎 Fruitful Moments</button>
     <button class="tbtn tbtn-print" onclick="window.print()">🖨️ Print</button>
   </div>
 </div>
@@ -548,7 +577,6 @@ ul{padding-left:20px;margin:6px 0;}li{padding:3px 0;}p{margin:5px 0;}
   <!-- JUMP NAV -->
   <nav class="jump-nav">
     <div class="jump-label">Jump to Section</div>
-    <button class="jlink" onclick="FF.jump('s-header')">📋 Header</button>
     <button class="jlink" onclick="FF.jump('s-discovery')">⭕ Discovery Circle</button>
     <button class="jlink" onclick="FF.jump('s-choice')">🎨 Choice Time</button>
     <button class="jlink" onclick="FF.jump('s-story')">📖 Story Gathering</button>
@@ -584,16 +612,6 @@ ul{padding-left:20px;margin:6px 0;}li{padding:3px 0;}p{margin:5px 0;}
     ${TREE_SVG}
     <p style="font-size:12px;color:var(--txl);margin-top:8px;font-style:italic;">Point to each part and name it together with children</p>
   </div>
-
-  <!-- 1. HEADER BLOCK -->
-  <div class="sec" id="s-header-card">
-    <div class="sec-hd" style="background:#1B4332;border-left:6px solid #52B788;">
-      <span class="sec-icon">🌳</span><span class="sec-title">Header Block</span>
-    </div>
-    <div class="sec-body">${md2html(headerContent) || '<p class="empty-notice">Header Block will appear here after lesson generation.</p>'}</div>
-  </div>
-
-  ${fmBtn(fruitfulMoments, 0, 'Opening Fruitful Moment')}
 
   <!-- 2. DISCOVERY CIRCLE -->
   <div class="sec" id="s-discovery">
@@ -787,16 +805,17 @@ var FF = (function() {
     openModal('🍎 ' + (fm.title || 'Fruitful Moment'), renderMD(fm.content));
   }
   function openGenericTransition(label) {
-    var ideas = [
-      '<strong>Clap the Beat:</strong> Clap a rhythm — children echo. Repeat 3x, change speed.',
-      '<strong>Body Freeze:</strong> Move/dance until teacher names a tree part — freeze in that shape.',
-      '<strong>Whisper Walk:</strong> Hands on shoulders of person in front, whisper-walk to next area.',
-      '<strong>Counting Breath:</strong> Breathe in 4 counts (roots pulling up water), out 4 counts (leaves releasing air). 3 times.',
-      '<strong>Wonder Sentence:</strong> Each child says "I wonder..." before moving to the next activity.'
-    ];
-    openModal('🍎 ' + (label || 'Transition Ideas'),
-      '<p style="margin-bottom:12px;color:#666;font-size:13px;">Quick transitions to move between activities:</p>' +
-      '<ul style="padding-left:20px;">' + ideas.map(function(i){ return '<li style="margin-bottom:10px;">' + i + '</li>'; }).join('') + '</ul>');
+    var singles = {
+      'Transition to Choice Time':    '<strong>Plan Whisper:</strong> Each child whispers to the teacher one thing they plan to do in Choice Time, then walks quietly to their first area.',
+      'Transition to Story Gathering':'<strong>Leaf Shape:</strong> Children make a leaf shape with their hands, hold it up, then "float" like a falling leaf to the Story Gathering spot.',
+      'Transition to Skill Builders': '<strong>Tree Freeze:</strong> Move and dance until the teacher calls out a tree part — everyone freezes in that shape, then walks to Skill Builders.',
+      'Transition to Outdoor Time':   '<strong>Counting Breath:</strong> Breathe in 4 counts (roots pulling water up), out 4 counts (leaves releasing air). Three times, then line up.',
+      'Transition to Reflection Time':'<strong>Wonder Sentence:</strong> Before sitting, each child completes "I wonder..." — hold that thought for Reflection Time.',
+    };
+    var activity = singles[label] || '<strong>Whisper Walk:</strong> Hands on the shoulders of the person in front, whisper-walk quietly to the next activity.';
+    openModal('🍎 ' + (label || 'Fruitful Moment Transition'),
+      '<div style="background:#FFF8F0;border-left:4px solid #F4A261;border-radius:0 8px 8px 0;padding:16px 18px;font-size:15px;line-height:1.7;color:#3D2B1F;">' +
+      activity + '</div>');
   }
 
   // ── Doc Modal ──
