@@ -248,6 +248,8 @@
       <button class="nav-btn active" id="navLibrary" onclick="showView('library')">Curriculum Library</button>
       <button class="nav-btn" id="navAdmin" onclick="showView('admin')" style="display:none">Admin</button>
       <button class="nav-btn" id="navCreate" onclick="showView('create')" style="display:none">Create Content</button>
+      <a href="/downloads/ff_daily_schedule.docx" download="FF_Daily_Schedule.docx"
+         class="nav-btn" style="text-decoration:none;opacity:0.85;" title="Download editable daily schedule">⬇️ Schedule</a>
     </nav>
     <button class="btn-logout" onclick="doLogout()">Sign Out</button>
   </header>
@@ -605,6 +607,15 @@ function renderWeeklyResources(weekLessons, startDay) {
         <button class="wr-print-btn purple" onclick="openVocabCards(${weekNum})">📋 View &amp; Print Vocab Cards</button>
       </div>
 
+      <div class="wr-card" style="border-color:#2B6CB0;background:linear-gradient(135deg,#EBF8FF,#fff);">
+        <div class="wr-card-title" style="color:#2B6CB0;">🗓️ Daily Schedule</div>
+        <div class="wr-card-desc">The Faithful Foundations daily schedule in Word format — download and modify times or activities to match your classroom's flow.</div>
+        <a href="/downloads/ff_daily_schedule.docx" download="FF_Daily_Schedule.docx"
+           style="display:inline-block;margin-top:12px;background:#2B6CB0;color:#fff;font-weight:700;font-size:13px;padding:9px 18px;border-radius:8px;text-decoration:none;font-family:inherit;">
+          ⬇️ Download Schedule (.docx)
+        </a>
+      </div>
+
     </div>
   </div>`;
 }
@@ -920,76 +931,50 @@ function openAreaSetup(weekNum) {
 }
 
 function openVocabCards(weekNum) {
-  // ── VERIFIED PHOTO IDs ──────────────────────────────────────────────────────
-  // Every photo ID verified by Unsplash URL slug (the slug IS the description).
-  // Format: images.unsplash.com/photo-{ID}?w=600&q=80&fit=crop&crop=entropy
-  // ────────────────────────────────────────────────────────────────────────────
+  // kw = search keywords for source.unsplash.com (no auth needed, works directly in <img> src)
+  // fb = fallback emoji if photo fails to load
   const vocabByWeek = {
     1: [
-      // Lk70P8uPRKA → slug: "a-lone-tree-stands-in-the-middle-of-a-field" — single oak, field ✓
-      { en:'Tree',      es:'Árbol',       pron:'AHR-bol',            def:'A tall plant with a trunk, branches, and leaves that can live for many years',                                   photo:'Lk70P8uPRKA', alt:'A lone oak tree standing in a field', accent:'#2D6A4F' },
-      // wBtlr14RBn0 → slug: "exposed-tree-roots-growing-beside-a-clear-stream" — roots on forest floor ✓
-      { en:'Roots',     es:'Raíces',      pron:'rah-EE-sehs',        def:'The parts of a tree that grow underground, hold it in the soil, and soak up water',                            photo:'wBtlr14RBn0', alt:'Exposed tree roots growing along the ground', accent:'#774936' },
-      // adGOBmYt7IQ → slug: "close-up-of-a-tree-trunk" — brown bark close up ✓
-      { en:'Trunk',     es:'Tronco',      pron:'TROHN-koh',          def:'The thick, strong main stem of a tree that supports all the branches',                                          photo:'adGOBmYt7IQ', alt:'Close-up of rough brown tree bark', accent:'#5A3519' },
-      // xI34ZoPt1Qg → slug: "bare-tree-branches-against-a-bright-blue-sky" — branches and sky ✓
-      { en:'Branches',  es:'Ramas',       pron:'RAH-mahs',           def:'The long parts that grow out from the trunk and hold the leaves and fruit',                                     photo:'xI34ZoPt1Qg', alt:'Bare tree branches reaching against a blue sky', accent:'#1B4332' },
-      // UGrFsrCQ39A → slug: "close-up-of-a-tree-branch-with-green-leaves" — green leaves ✓
-      { en:'Leaves',    es:'Hojas',       pron:'OH-hahs',            def:'The flat green parts of a tree that capture sunlight and make food for the tree',                               photo:'UGrFsrCQ39A', alt:'Close-up of green leaves on a branch', accent:'#276749' }
+      { en:'Tree',      es:'Árbol',       pron:'AHR-bol',            def:'A tall plant with a trunk, branches, and leaves that can live for many years',                              kw:'oak,tree,field',           fb:'🌳', accent:'#2D6A4F' },
+      { en:'Roots',     es:'Raíces',      pron:'rah-EE-sehs',        def:'The parts of a tree that grow underground, hold it in the soil, and soak up water',                        kw:'tree,roots,exposed',       fb:'🌿', accent:'#774936' },
+      { en:'Trunk',     es:'Tronco',      pron:'TROHN-koh',          def:'The thick, strong main stem of a tree that supports all the branches',                                      kw:'tree,bark,trunk,closeup',  fb:'🪵', accent:'#5A3519' },
+      { en:'Branches',  es:'Ramas',       pron:'RAH-mahs',           def:'The long parts that grow out from the trunk and hold the leaves and fruit',                                 kw:'tree,branches,sky',        fb:'🌱', accent:'#1B4332' },
+      { en:'Leaves',    es:'Hojas',       pron:'OH-hahs',            def:'The flat green parts of a tree that capture sunlight and make food for the tree',                           kw:'green,leaves,tree,closeup',fb:'🍃', accent:'#276749' }
     ],
     2: [
-      // MEpliIwa3aU → slug: "close-up-of-a-tree-trunk-with-very-thin-bark" — pine bark texture ✓
-      { en:'Bark',      es:'Corteza',     pron:'kor-TEH-sah',        def:'The rough outer covering on a tree trunk that protects it — like skin protects our bodies',                    photo:'MEpliIwa3aU', alt:'Close-up of pine tree bark texture', accent:'#5A3519' },
-      // zvaFSqCiD1M → slug: "an-acorn-hangs-from-an-oak-tree-branch" — acorn on branch ✓
-      { en:'Seeds',     es:'Semillas',    pron:'seh-MEE-yahs',       def:'The tiny parts inside fruit or pods that can grow into brand new trees — acorns are seeds!',                   photo:'zvaFSqCiD1M', alt:'An acorn hanging from an oak tree branch', accent:'#774936' },
-      // BukaL9w-llM → slug: "ripe-red-apples-hanging-from-a-tree-branch" — red apples on branch ✓
-      { en:'Fruit',     es:'Fruta',       pron:'FROO-tah',           def:'The sweet part of a tree that grows around seeds — like apples, peaches, and pears',                          photo:'BukaL9w-llM', alt:'Ripe red apples hanging from a tree branch', accent:'#C4512B' },
-      // IlaY6fovzwM → slug: "sunlight-shines-through-the-green-forest-canopy" — sunbeams in forest ✓
-      { en:'Sunlight',  es:'Sol',         pron:'sohl',               def:'The light from the sun that trees use to make their own food through their leaves',                             photo:'IlaY6fovzwM', alt:'Sunlight shining through green forest canopy', accent:'#744210' },
-      // dXYE1d08BiY → slug: "green-leaf-with-water-drops" — water drops on leaf ✓
-      { en:'Water',     es:'Agua',        pron:'AH-gwah',            def:'The liquid that tree roots soak up from the soil to help the whole tree grow tall and strong',                  photo:'dXYE1d08BiY', alt:'Water drops on a green leaf', accent:'#2B6CB0' }
+      { en:'Bark',      es:'Corteza',     pron:'kor-TEH-sah',        def:'The rough outer covering on a tree trunk that protects it — like skin protects our bodies',                kw:'bark,texture,tree',        fb:'🌲', accent:'#5A3519' },
+      { en:'Seeds',     es:'Semillas',    pron:'seh-MEE-yahs',       def:'The tiny parts inside fruit or pods that can grow into brand new trees — acorns are seeds!',               kw:'acorn,seed,oak,branch',    fb:'🌰', accent:'#774936' },
+      { en:'Fruit',     es:'Fruta',       pron:'FROO-tah',           def:'The sweet part of a tree that grows around seeds — like apples, peaches, and pears',                      kw:'apple,tree,red,fruit',     fb:'🍎', accent:'#C4512B' },
+      { en:'Sunlight',  es:'Sol',         pron:'sohl',               def:'The light from the sun that trees use to make their own food through their leaves',                         kw:'sunlight,forest,rays',     fb:'☀️', accent:'#744210' },
+      { en:'Water',     es:'Agua',        pron:'AH-gwah',            def:'The liquid that tree roots soak up from the soil to help the whole tree grow tall and strong',              kw:'rain,leaf,water,drops',    fb:'💧', accent:'#2B6CB0' }
     ],
     3: [
-      // hQNY2WP-qY4 → slug: "sunlight-through-trees" — forest of tall trunks, sun rays ✓
-      { en:'Forest',    es:'Bosque',      pron:'BOHS-keh',           def:'A large area where many trees grow close together — home to animals, birds, and thousands of plants',          photo:'hQNY2WP-qY4', alt:'Sunlight streaming through a tall forest', accent:'#1B4332' },
-      // mBV6JIBq1l0 → slug: "brown-soil" — rich brown earth ✓
-      { en:'Soil',      es:'Tierra',      pron:'TYEH-rah',           def:'The rich dirt that holds roots and gives trees the water and minerals they need to grow',                       photo:'mBV6JIBq1l0', alt:'Rich brown soil', accent:'#774936' },
-      // pOLdN-IU2fc → slug: "looking-up-at-trees-and-the-sky" — canopy view from below ✓
-      { en:'Canopy',    es:'Dosel',       pron:'doh-SEHL',           def:'The high umbrella of leaves and branches at the very top of trees that shades everything below',                photo:'pOLdN-IU2fc', alt:'Looking up through the tree canopy to the sky', accent:'#2D6A4F' },
-      // E_x9S0unazg → slug: "a-bird-is-sitting-in-a-hollow-in-a-tree" — bird in tree hollow ✓
-      { en:'Shelter',   es:'Refugio',     pron:'reh-FOO-hyoh',       def:'A safe, protected place to rest and stay warm — trees provide shelter for birds, squirrels, and people',      photo:'E_x9S0unazg', alt:'A bird sitting in a hollow in a tree', accent:'#2B6CB0' },
-      // lucoRaVusXc → slug: "a-new-plant-bud-emerges-from-the-ground" — green shoot in soil ✓
-      { en:'Grow',      es:'Crecer',      pron:'kreh-SEHR',          def:'To get bigger, taller, and stronger over time — just like trees start as tiny seeds and grow tall',            photo:'lucoRaVusXc', alt:'A new green plant bud emerging from the soil', accent:'#276749' }
+      { en:'Forest',    es:'Bosque',      pron:'BOHS-keh',           def:'A large area where many trees grow close together — home to animals, birds, and thousands of plants',      kw:'forest,trees,woodland',    fb:'🌲', accent:'#1B4332' },
+      { en:'Soil',      es:'Tierra',      pron:'TYEH-rah',           def:'The rich dirt that holds roots and gives trees the water and minerals they need to grow',                   kw:'soil,dirt,earth,ground',   fb:'🌍', accent:'#774936' },
+      { en:'Canopy',    es:'Dosel',       pron:'doh-SEHL',           def:'The high umbrella of leaves and branches at the very top of trees that shades everything below',            kw:'canopy,forest,treetop,sky',fb:'🌿', accent:'#2D6A4F' },
+      { en:'Shelter',   es:'Refugio',     pron:'reh-FOO-hyoh',       def:'A safe, protected place to rest and stay warm — trees provide shelter for birds, squirrels, and people',  kw:'bird,nest,tree,hollow',    fb:'🏡', accent:'#2B6CB0' },
+      { en:'Grow',      es:'Crecer',      pron:'kreh-SEHR',          def:'To get bigger, taller, and stronger over time — just like trees start as tiny seeds and grow tall',        kw:'seedling,sprout,soil',     fb:'🌱', accent:'#276749' }
     ],
     4: [
-      // M7BC90QvV6o → slug: "colorful-autumn-tree-with-fallen-leaves-on-ground" — full autumn tree ✓
-      { en:'Seasons',   es:'Estaciones',  pron:'ehs-tah-SYOH-nehs',  def:'The four times of year — spring, summer, fall, and winter — when trees look completely different',            photo:'M7BC90QvV6o', alt:'Colorful autumn tree with fallen leaves on the ground', accent:'#744210' },
-      // rKIhWyAyxo8 → slug: "autumn-leaves-in-warm-colors-on-branches" — red/orange/yellow leaves ✓
-      { en:'Change',    es:'Cambio',      pron:'KAHM-byoh',          def:'When something becomes different — trees change color, lose leaves, then grow fresh new ones each year',       photo:'rKIhWyAyxo8', alt:'Warm autumn leaves in red, orange, and yellow', accent:'#553C9A' },
-      // RC3ub4nTAJY → slug: "a-little-boy-holding-a-magnifying-glass-in-his-hand" — child observing ✓
-      { en:'Observe',   es:'Observar',    pron:'ohb-sehr-BAHR',      def:'To look carefully and notice things using your eyes, ears, hands, nose, and heart',                            photo:'RC3ub4nTAJY', alt:'A child holding a magnifying glass, observing', accent:'#2B6CB0' },
-      // o42dE1p3GHQ → slug: "bare-tree-branches-against-a-cloudy-sky" — two trees side by side ✓
-      { en:'Compare',   es:'Comparar',    pron:'kohm-pah-RAHR',      def:'To look at two things and notice what is the same and what is different between them',                        photo:'o42dE1p3GHQ', alt:'Bare tree branches against a cloudy sky for comparison', accent:'#744210' },
-      // 8yrBN0oeC1g → slug: "aurora-borealis-lights-up-the-starry-night-sky" — awe and wonder ✓
-      { en:'Wonder',    es:'Asombro',     pron:'ah-SOHM-broh',       def:'The amazing feeling of surprise and curiosity when you discover something new and beautiful',                 photo:'8yrBN0oeC1g', alt:'Aurora borealis lighting up the starry night sky', accent:'#553C9A' }
+      { en:'Seasons',   es:'Estaciones',  pron:'ehs-tah-SYOH-nehs',  def:'The four times of year — spring, summer, fall, and winter — when trees look completely different',        kw:'autumn,fall,tree,leaves',  fb:'🍂', accent:'#744210' },
+      { en:'Change',    es:'Cambio',      pron:'KAHM-byoh',          def:'When something becomes different — trees change color, lose leaves, then grow fresh new ones each year',   kw:'autumn,leaves,orange,red', fb:'🔄', accent:'#553C9A' },
+      { en:'Observe',   es:'Observar',    pron:'ohb-sehr-BAHR',      def:'To look carefully and notice things using your eyes, ears, hands, nose, and heart',                        kw:'child,magnify,nature',     fb:'🔍', accent:'#2B6CB0' },
+      { en:'Compare',   es:'Comparar',    pron:'kohm-pah-RAHR',      def:'To look at two things and notice what is the same and what is different between them',                    kw:'two,trees,forest,compare', fb:'⚖️', accent:'#744210' },
+      { en:'Wonder',    es:'Asombro',     pron:'ah-SOHM-broh',       def:'The amazing feeling of surprise and curiosity when you discover something new and beautiful',             kw:'stars,night,wonder,sky',   fb:'✨', accent:'#553C9A' }
     ],
     5: [
-      // Ks4t8IK8Kgw → slug: "group-of-children-laughing-together" — children community ✓
-      { en:'Community', es:'Comunidad',   pron:'koh-moo-nee-DAHD',   def:'A group of people who live, grow, and care for each other — just like a forest of trees',                    photo:'Ks4t8IK8Kgw', alt:'A group of children laughing together', accent:'#1B4332' },
-      // wBtlr14RBn0 → slug: "exposed-tree-roots-growing-beside-a-clear-stream" — roots (same as W1) ✓
-      { en:'Roots',     es:'Raíces',      pron:'rah-EE-sehs',        def:'What holds us grounded and strong — just like tree roots hold the whole tree steady through storms',          photo:'wBtlr14RBn0', alt:'Exposed tree roots on the forest floor', accent:'#774936' },
-      // lucoRaVusXc → slug: "a-new-plant-bud-emerges-from-the-ground" — growth ✓
-      { en:'Growth',    es:'Crecimiento', pron:'kreh-see-MYEHN-toh', def:'The wonderful process of becoming bigger, taller, stronger, and wiser — bit by bit, day by day',             photo:'lucoRaVusXc', alt:'A new green shoot emerging from the earth', accent:'#2D6A4F' },
-      // Lk70P8uPRKA → slug: "a-lone-tree-stands-in-the-middle-of-a-field" — unique tree alone ✓
-      { en:'Unique',    es:'Único',       pron:'OO-nee-koh',         def:'One of a kind — no two trees are exactly the same, and every child is beautifully, wonderfully unique',      photo:'Lk70P8uPRKA', alt:'A lone, unique tree standing in an open field', accent:'#744210' },
-      // wBtlr14RBn0 roots connecting — or use forest hQNY2WP-qY4 for connected trees ✓
-      { en:'Connected', es:'Conectado',   pron:'koh-nehk-TAH-doh',   def:'Joined together and belonging — tree roots touch underground, connecting the whole forest',                  photo:'hQNY2WP-qY4', alt:'Trees in a forest connected by their roots', accent:'#2B6CB0' }
+      { en:'Community', es:'Comunidad',   pron:'koh-moo-nee-DAHD',   def:'A group of people who live, grow, and care for each other — just like a forest of trees',                kw:'children,together,group',  fb:'🫂', accent:'#1B4332' },
+      { en:'Roots',     es:'Raíces',      pron:'rah-EE-sehs',        def:'What holds us grounded and strong — just like tree roots hold the whole tree steady through storms',      kw:'tree,roots,ground,forest', fb:'💛', accent:'#774936' },
+      { en:'Growth',    es:'Crecimiento', pron:'kreh-see-MYEHN-toh', def:'The wonderful process of becoming bigger, taller, stronger, and wiser — bit by bit, day by day',         kw:'plant,growth,sprout,new',  fb:'🌱', accent:'#2D6A4F' },
+      { en:'Unique',    es:'Único',       pron:'OO-nee-koh',         def:'One of a kind — no two trees are exactly the same, and every child is beautifully, wonderfully unique',  kw:'lone,tree,field,alone',    fb:'⭐', accent:'#744210' },
+      { en:'Connected', es:'Conectado',   pron:'koh-nehk-TAH-doh',   def:'Joined together and belonging — tree roots touch underground, connecting the whole forest',              kw:'forest,roots,connected',   fb:'🤝', accent:'#2B6CB0' }
     ]
   };
 
   const words = vocabByWeek[weekNum] || vocabByWeek[1];
   const dayStart = (weekNum - 1) * 5 + 1;
-  const U = 'https://images.unsplash.com/photo-';  // base URL
+  // source.unsplash.com serves real photos by keyword — no auth needed, works in <img> tags directly
+  const photoURL = (kw, w, h) => 'https://source.unsplash.com/' + w + 'x' + h + '/?' + kw;
 
   // ── Digital card: photo at top, full info below, padded ──
   const digitalCard = (w, i) =>
@@ -997,10 +982,10 @@ function openVocabCards(weekNum) {
       '<div style="background:' + w.accent + ';color:#fff;padding:10px 20px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1px;display:flex;justify-content:space-between;">' +
         '<span>Faithful Foundations · Exploring Trees</span><span>Day ' + (dayStart + i) + ' · Week ' + weekNum + '</span>' +
       '</div>' +
-      '<img src="' + U + w.photo + '?w=680&h=280&fit=crop&crop=entropy&q=85" alt="' + w.alt + '" ' +
+      '<img src="' + photoURL(w.kw, 680, 280) + '" alt="' + w.alt + '" ' +
         'style="width:100%;height:220px;object-fit:cover;display:block;" ' +
         'onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'">' +
-      '<div style="display:none;height:120px;background:#F0FFF4;align-items:center;justify-content:center;font-size:48px;">🌳</div>' +
+      '<div style="display:none;height:120px;background:#F0FFF4;align-items:center;justify-content:center;font-size:48px;">' + w.fb + '</div>' +
       '<div style="padding:20px 24px 22px;">' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">' +
           '<div>' +
@@ -1027,7 +1012,7 @@ function openVocabCards(weekNum) {
       '<div style="background:' + w.accent + ';color:#fff;padding:12px 24px;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:1px;display:flex;justify-content:space-between;">' +
         '<span>Faithful Foundations · Exploring Trees</span><span>Day ' + (dayStart + i) + ' · Week ' + weekNum + '</span>' +
       '</div>' +
-      '<img src="' + U + w.photo + '?w=800&h=380&fit=crop&crop=entropy&q=90" alt="' + w.alt + '" ' +
+      '<img src="' + photoURL(w.kw, 800, 380) + '" alt="' + w.alt + '" ' +
         'style="width:100%;height:340px;object-fit:cover;display:block;">' +
       '<div style="padding:24px 28px 20px;border:3px solid ' + w.accent + ';border-top:none;">' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:18px;">' +
@@ -1077,14 +1062,14 @@ function printVocabCards() {
   const panel = document.getElementById('printPanel-vocab');
   const weekNum = parseInt(panel.dataset.printWeek || 1);
   const words = JSON.parse(panel.dataset.printWords || '[]');
-  const U = 'https://images.unsplash.com/photo-';
+  const srcPhoto = (kw) => 'https://source.unsplash.com/800x380/?' + kw;
 
   const printCard = (w) =>
     '<div style="width:100%;page-break-after:always;break-after:page;font-family:Arial,sans-serif;">' +
       '<div style="background:' + w.accent + ';color:#fff;padding:12px 24px;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:1px;display:flex;justify-content:space-between;">' +
         '<span>Faithful Foundations · Exploring Trees</span><span>Day ' + w.dayNum + ' · Week ' + weekNum + '</span>' +
       '</div>' +
-      '<img src="' + U + w.photo + '?w=800&h=380&fit=crop&crop=entropy&q=90" alt="' + w.alt + '" style="width:100%;height:340px;object-fit:cover;display:block;">' +
+      '<img src="' + srcPhoto(w.kw) + '" alt="' + w.en + '" style="width:100%;height:340px;object-fit:cover;display:block;">' +
       '<div style="padding:24px 28px 20px;border:3px solid ' + w.accent + ';border-top:none;">' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:18px;">' +
           '<div>' +
