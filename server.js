@@ -34,7 +34,7 @@ app.use('/api/generate', require('./routes/generate'));
 app.use('/api/pipeline', require('./routes/pipeline'));
 app.use('/lesson', require('./routes/render'));
 
-// Health check
+app.use('/api/vocab-image', require('./routes/vocabimage'));
 app.get('/api/health', (req, res) => res.json({ status: 'ok', app: 'Faithful Foundations' }));
 
 // SPA fallback
