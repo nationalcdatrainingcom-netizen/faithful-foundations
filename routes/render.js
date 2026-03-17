@@ -490,7 +490,7 @@ ul{padding-left:20px;margin:6px 0;}li{padding:3px 0;}p{margin:5px 0;}
 <div class="topbar">
   <div class="topbar-brand">🌳 Faithful Foundations</div>
   <div class="topbar-btns">
-    <button class="tbtn tbtn-back" onclick="window.history.back()">← Back</button>
+    <button class="tbtn tbtn-back" onclick="FF.returnToLibrary()">← Curriculum Library</button>
     <button class="tbtn tbtn-prep" onclick="FF.openPanel('panel-prep')">📋 Prep</button>
     <button class="tbtn tbtn-print" onclick="window.print()">🖨️ Print</button>
   </div>
@@ -752,6 +752,20 @@ var FF = (function() {
     win.document.write('</body></html>');
     win.document.close();
     setTimeout(function(){ win.focus(); win.print(); }, 700);
+  }
+
+  // ── Return to Curriculum Library ──
+  // Lessons open in a new tab. This closes the tab and focuses the opener (library).
+  // If no opener (direct link), navigates to the app root.
+  function returnToLibrary() {
+    if (window.opener && !window.opener.closed) {
+      window.opener.focus();
+      window.close();
+    } else if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      window.location.href = '/';
+    }
   }
 
   // ── Jump to section ──
