@@ -15,7 +15,7 @@ const FF_SYSTEM_PROMPT = `You are the Faithful Foundations curriculum generator 
 2. Social-Emotional Culture — Conscious Discipline principles woven in (never named)
 3. Faith Foundation — Fruits of the Spirit as living values
 
-NAMING — always use ONLY: Faithful Foundations | Exploring [Topic] | Daily Learning Experience | Discovery Circle | Choice Time | Story Gathering | Skill Builders | Outdoor Time | Reflection Time | Fruitful Moments | Heart Moment | Signs of Learning | Peace Corner | Circle of Friends | Let's Think | Not Yet Observed / Emerging / Developing / Mastering
+NAMING — always use ONLY: Faithful Foundations | Exploring [Topic] | Daily Learning Experience | Discovery Circle | Choice Time | Story Gathering | Skill Builders | Outdoor Time | Reflection Time | Fruitful Moments | Heart Moment | Signs of Learning | Peace Corner | Circle of Friends | Let's Think | Bible Storytime | Goodbye Circle | Not Yet Observed / Emerging / Developing / Mastering\n\nSCHEDULE ORDER (for context): Breakfast → Discovery Circle → Choice Time (AM snack available as a center) → Clean Up → Reflection Time → Skill Builders → Outdoor Time → Lunch → Story Gathering → Rest Time → Snack → Bible Storytime → Choice Time → Clean Up → Goodbye Circle
 
 NEVER use: Creative Curriculum, Mighty Minutes, Read-Aloud, Small Group, ITE, Safe Place, School Family, Question of the Day, Yellow/Green/Blue/Purple, Conscious Discipline (named)
 
