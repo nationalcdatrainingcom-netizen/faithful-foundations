@@ -755,13 +755,9 @@ var FF = (function() {
   }
 
   // ── Return to Curriculum Library ──
-  // Lessons open in a new tab. This closes the tab and focuses the opener (library).
-  // If no opener (direct link), navigates to the app root.
+  // Lessons open in the same tab, so history.back() always works.
   function returnToLibrary() {
-    if (window.opener && !window.opener.closed) {
-      window.opener.focus();
-      window.close();
-    } else if (window.history.length > 1) {
+    if (window.history.length > 1) {
       window.history.back();
     } else {
       window.location.href = '/';
