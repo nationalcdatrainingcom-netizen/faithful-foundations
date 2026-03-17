@@ -23,50 +23,19 @@ async function fetchBookCover(title, author) {
   return null;
 }
 
-// ── TREE DIAGRAM (SVG — always accurate, no photo dependency) ──
-const TREE_SVG = `<svg viewBox="0 0 520 400" xmlns="http://www.w3.org/2000/svg" style="max-width:480px;width:100%;border-radius:12px;display:block;margin:0 auto;">
-  <rect width="520" height="245" fill="#D6EEFF" rx="12"/>
-  <circle cx="460" cy="50" r="30" fill="#FFD93D" opacity="0.9"/>
-  <rect y="245" width="520" height="20" fill="#5D8A3C"/>
-  <rect y="265" width="520" height="135" fill="#8B6914" rx="0"/>
-  <line x1="0" y1="295" x2="520" y2="295" stroke="#7A5C10" stroke-width="1" opacity="0.4"/>
-  <line x1="0" y1="330" x2="520" y2="330" stroke="#7A5C10" stroke-width="1" opacity="0.4"/>
-  <text x="28" y="282" fill="#C9A84C" font-family="Arial,sans-serif" font-size="11" font-weight="700" opacity="0.9">underground</text>
-  <path d="M248,268 Q210,285 185,315" stroke="#6B4226" stroke-width="10" fill="none" stroke-linecap="round"/>
-  <path d="M258,268 Q255,298 252,330" stroke="#6B4226" stroke-width="9" fill="none" stroke-linecap="round"/>
-  <path d="M268,268 Q305,285 330,315" stroke="#6B4226" stroke-width="10" fill="none" stroke-linecap="round"/>
-  <path d="M243,280 Q205,305 175,340" stroke="#7D4F2A" stroke-width="6" fill="none" stroke-linecap="round"/>
-  <path d="M273,280 Q312,305 342,340" stroke="#7D4F2A" stroke-width="6" fill="none" stroke-linecap="round"/>
-  <rect x="234" y="155" width="50" height="112" rx="8" fill="#6B4226"/>
-  <rect x="240" y="160" width="10" height="100" rx="4" fill="#7D4F2A" opacity="0.4"/>
-  <path d="M258,162 Q218,128 175,94" stroke="#5A3519" stroke-width="16" fill="none" stroke-linecap="round"/>
-  <path d="M260,162 Q300,118 345,90" stroke="#5A3519" stroke-width="14" fill="none" stroke-linecap="round"/>
-  <path d="M255,178 Q238,148 220,118" stroke="#5A3519" stroke-width="10" fill="none" stroke-linecap="round"/>
-  <path d="M263,178 Q282,145 305,125" stroke="#5A3519" stroke-width="10" fill="none" stroke-linecap="round"/>
-  <path d="M255,192 Q225,175 195,165" stroke="#5A3519" stroke-width="8" fill="none" stroke-linecap="round"/>
-  <path d="M263,192 Q298,172 325,165" stroke="#5A3519" stroke-width="8" fill="none" stroke-linecap="round"/>
-  <ellipse cx="215" cy="78" rx="55" ry="42" fill="#2D6A4F" opacity="0.92"/>
-  <ellipse cx="295" cy="72" rx="52" ry="40" fill="#2D6A4F" opacity="0.92"/>
-  <ellipse cx="258" cy="60" rx="50" ry="38" fill="#40916C"/>
-  <ellipse cx="185" cy="110" rx="38" ry="28" fill="#2D6A4F" opacity="0.88"/>
-  <ellipse cx="330" cy="108" rx="36" ry="26" fill="#2D6A4F" opacity="0.88"/>
-  <ellipse cx="258" cy="50" rx="32" ry="25" fill="#52B788"/>
-  <ellipse cx="180" cy="62" rx="14" ry="10" fill="#52B788" transform="rotate(-25 180 62)"/>
-  <ellipse cx="338" cy="60" rx="14" ry="10" fill="#52B788" transform="rotate(20 338 60)"/>
-  <line x1="345" y1="68" x2="388" y2="46" stroke="#1B4332" stroke-width="1.5"/>
-  <rect x="388" y="30" width="80" height="26" rx="13" fill="rgba(27,67,50,0.92)"/>
-  <text x="428" y="47" fill="#D8F3DC" font-family="Arial,sans-serif" font-size="13" font-weight="800" text-anchor="middle">🌿 Leaves</text>
-  <line x1="326" y1="118" x2="376" y2="110" stroke="#5A3519" stroke-width="1.5"/>
-  <rect x="376" y="96" width="112" height="26" rx="13" fill="rgba(90,53,25,0.92)"/>
-  <text x="432" y="113" fill="#F7E6D3" font-family="Arial,sans-serif" font-size="13" font-weight="800" text-anchor="middle">🌲 Branches</text>
-  <line x1="233" y1="212" x2="162" y2="218" stroke="#6B4226" stroke-width="1.5"/>
-  <rect x="66" y="204" width="94" height="26" rx="13" fill="rgba(107,66,38,0.92)"/>
-  <text x="113" y="221" fill="#F7E6D3" font-family="Arial,sans-serif" font-size="13" font-weight="800" text-anchor="middle">🪵 Trunk</text>
-  <line x1="202" y1="312" x2="140" y2="322" stroke="#C9A84C" stroke-width="1.5"/>
-  <rect x="30" y="308" width="108" height="26" rx="13" fill="rgba(27,67,50,0.92)"/>
-  <text x="84" y="325" fill="#D8F3DC" font-family="Arial,sans-serif" font-size="13" font-weight="800" text-anchor="middle">🌱 Roots</text>
-  <text x="84" y="340" fill="#C9A84C" font-family="Arial,sans-serif" font-size="10" text-anchor="middle">(underground)</text>
-</svg>`;
+// ── TREE PHOTO (real photograph via Pexels CDN — no auth needed) ──
+const TREE_PHOTO = `<div style="border-radius:12px;overflow:hidden;max-width:480px;margin:0 auto;position:relative;">
+  <img src="https://images.pexels.com/photos/1179229/pexels-photo-1179229.jpeg?auto=compress&cs=tinysrgb&w=680&h=320&fit=crop"
+       alt="A large oak tree with visible trunk, branches, and roots"
+       style="width:100%;height:220px;object-fit:cover;display:block;"
+       onerror="this.parentElement.innerHTML='<div style=\'background:#F0FFF4;height:220px;display:flex;align-items:center;justify-content:center;font-size:64px;\'>🌳</div>'">
+  <div style="position:absolute;bottom:8px;left:8px;right:8px;display:flex;gap:6px;flex-wrap:wrap;">
+    <span style="background:rgba(27,67,50,.88);color:#D8F3DC;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;">🌿 Leaves</span>
+    <span style="background:rgba(90,53,25,.88);color:#F7E6D3;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;">🌲 Branches</span>
+    <span style="background:rgba(107,66,38,.88);color:#F7E6D3;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;">🪵 Trunk</span>
+    <span style="background:rgba(27,67,50,.88);color:#D8F3DC;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;">🌱 Roots</span>
+  </div>
+</div>`;
 
 // ── SECTION PARSER ──
 function parseLessonSections(markdown) {
@@ -246,11 +215,13 @@ function fmBtn(fruitfulMoments, idx, label) {
   }
   // Generic fallback — ONE pre-selected activity per transition context
   const singles = {
-    'Transition to Choice Time':    '<strong>Plan Whisper:</strong> Each child whispers to the teacher one thing they plan to do in Choice Time, then walks quietly to their first area.',
-    'Transition to Story Gathering':'<strong>Leaf Shape:</strong> Children make a leaf shape with their hands, hold it up, then "float" like a falling leaf to the Story Gathering spot.',
-    'Transition to Skill Builders': '<strong>Tree Freeze:</strong> Move and dance until the teacher calls out a tree part — everyone freezes in that shape, then walks to Skill Builders.',
-    'Transition to Outdoor Time':   '<strong>Counting Breath:</strong> Breathe in 4 counts (roots pulling water up), out 4 counts (leaves releasing air). Three times, then line up.',
-    'Transition to Reflection Time':'<strong>Wonder Sentence:</strong> Before sitting, each child completes "I wonder..." — hold that thought for Reflection Time.',
+    'Transition to Choice Time':    'Planning Time — each child tells the teacher their area and plan before moving one by one',
+    'Transition to Story Gathering':'Leaf Shape — float like a falling leaf to the Story Gathering spot',
+    'Transition to Skill Builders': 'Tree Freeze — freeze in a tree-part shape, then walk to small group',
+    'Transition to Outdoor Time':   'Counting Breath — breathe in 4 counts (roots), out 4 counts (leaves), then line up',
+    'Transition to Reflection Time':'Wonder Sentence — each child completes "I wonder..." before sitting',
+    'Transition to Bible Storytime':'Peace Walk — quiet hands-folded walk to gathering area',
+    'Transition to Goodbye Circle': 'Gratitude Round — share one thankful thought before joining the circle',
   };
   const activity = singles[label] || '<strong>Whisper Walk:</strong> Hands on shoulders of the person in front, whisper-walk quietly to the next activity.';
   return `<button class="fm-transition-btn" onclick="FF.openGenericTransition('${(label || 'Transition').replace(/'/g, '\\u0027')}')">
@@ -528,13 +499,14 @@ ul{padding-left:20px;margin:6px 0;}li{padding:3px 0;}p{margin:5px 0;}
 <!-- PREP PANEL -->
 <div class="page-panel" id="panel-prep">
   <div class="panel-hd">
-    <div class="panel-hd-title" style="color:#2B6CB0;">📋 Materials &amp; Prep — Day ${dayNum}</div>
+    <div class="panel-hd-title" style="color:#2B6CB0;">📋 Daily Prep — Day ${dayNum}</div>
     <button class="panel-print" onclick="FF.printPanel('prep-body')">🖨️ Print</button>
     <button class="panel-close" onclick="FF.closePanel('panel-prep')">✕ Close</button>
   </div>
   <div class="panel-body" id="prep-body">
-    <p style="color:var(--txl);font-size:13px;margin-bottom:16px;">Gather all items before children arrive.</p>
-    ${md2html(headerContent) || '<p class="empty-notice">Header Block content will appear here after lesson generation.</p>'}
+    <p style="color:var(--txl);font-size:13px;margin-bottom:4px;">Specific materials and setup items for <strong>today only</strong>. Gather before children arrive.</p>
+    <p style="color:var(--txl);font-size:12px;margin-bottom:20px;font-style:italic;">For weekly center setup, see <strong>Weekly Prep</strong> in the Weekly Resources panel.</p>
+    ${md2html(headerContent) || '<p class="empty-notice">Daily materials and prep will appear here after lesson generation.</p>'}
   </div>
 </div>
 
@@ -607,9 +579,9 @@ ul{padding-left:20px;margin:6px 0;}li{padding:3px 0;}p{margin:5px 0;}
     </div>
   </div>` : ''}
 
-  <!-- TREE DIAGRAM -->
+  <!-- TREE PHOTO -->
   <div style="text-align:center;background:var(--gp);border-radius:12px;padding:16px;margin-bottom:24px;" id="s-header">
-    ${TREE_SVG}
+    ${TREE_PHOTO}
     <p style="font-size:12px;color:var(--txl);margin-top:8px;font-style:italic;">Point to each part and name it together with children</p>
   </div>
 
@@ -688,7 +660,15 @@ ul{padding-left:20px;margin:6px 0;}li{padding:3px 0;}p{margin:5px 0;}
     <div class="sec-hd" style="background:#2D6A4F;border-left:6px solid #95D5B2;">
       <span class="sec-icon">☀️</span><span class="sec-title">Outdoor Time</span>
     </div>
-    <div class="sec-body">${md2html(outdoorContent) || '<p class="empty-notice">Outdoor Time will appear here after lesson generation.</p>'}</div>
+    <div class="sec-body">
+      <div style="background:#F0FFF4;border:1px solid #95D5B2;border-radius:8px;padding:10px 16px;margin-bottom:14px;font-size:13px;color:#1B4332;">
+        🏃 <strong>Free Play & Large Motor:</strong> Children have the full outdoor space and large motor equipment available throughout Outdoor Time — running, climbing, swinging, and open play are the primary focus.
+      </div>
+      <div style="background:#FFFBEB;border:1px solid #D4A017;border-radius:8px;padding:10px 16px;margin-bottom:14px;font-size:13px;color:#744210;">
+        🌳 <strong>Featured Exploration Activity (one option among many):</strong> The activity below is offered as one choice during Outdoor Time — not a required whole-group activity.
+      </div>
+      ${md2html(outdoorContent) || '<p class="empty-notice">Outdoor Time will appear here after lesson generation.</p>'}
+    </div>
   </div>
 
   ${fmBtn(fruitfulMoments, 5, 'Transition to Reflection Time')}
@@ -806,14 +786,23 @@ var FF = (function() {
   }
   function openGenericTransition(label) {
     var singles = {
-      'Transition to Choice Time':    '<strong>Plan Whisper:</strong> Each child whispers to the teacher one thing they plan to do in Choice Time, then walks quietly to their first area.',
-      'Transition to Story Gathering':'<strong>Leaf Shape:</strong> Children make a leaf shape with their hands, hold it up, then "float" like a falling leaf to the Story Gathering spot.',
-      'Transition to Skill Builders': '<strong>Tree Freeze:</strong> Move and dance until the teacher calls out a tree part — everyone freezes in that shape, then walks to Skill Builders.',
-      'Transition to Outdoor Time':   '<strong>Counting Breath:</strong> Breathe in 4 counts (roots pulling water up), out 4 counts (leaves releasing air). Three times, then line up.',
-      'Transition to Reflection Time':'<strong>Wonder Sentence:</strong> Before sitting, each child completes "I wonder..." — hold that thought for Reflection Time.',
+      'Transition to Choice Time':
+        '<strong>Planning Time:</strong> Before anyone moves, the teacher asks each child individually: <em>"What learning area are you going to work in? What will you do there?"</em> After a child shares their plan, they move one by one to their chosen area. This intentional planning supports self-direction and purposeful play.',
+      'Transition to Story Gathering':
+        '<strong>Leaf Shape:</strong> Children make a leaf shape with their hands, hold it up, then "float" like a falling leaf to the Story Gathering spot.',
+      'Transition to Skill Builders':
+        '<strong>Tree Freeze:</strong> Move and dance until the teacher calls out a tree part — everyone freezes in that shape, then walks to their small group.',
+      'Transition to Outdoor Time':
+        '<strong>Counting Breath:</strong> Breathe in 4 counts (roots pulling water up), out 4 counts (leaves releasing air). Three times, then line up.',
+      'Transition to Reflection Time':
+        '<strong>Wonder Sentence:</strong> Before sitting, each child completes "I wonder..." — hold that thought for Reflection Time.',
+      'Transition to Bible Storytime':
+        '<strong>Peace Walk:</strong> Children walk quietly with hands folded, breathing slowly, to the gathering area for Bible Storytime.',
+      'Transition to Goodbye Circle':
+        '<strong>Gratitude Round:</strong> As children finish clean-up, each shares one thing they are thankful for from today before joining the Goodbye Circle.',
     };
     var activity = singles[label] || '<strong>Whisper Walk:</strong> Hands on the shoulders of the person in front, whisper-walk quietly to the next activity.';
-    openModal('🍎 ' + (label || 'Fruitful Moment Transition'),
+    openModal('\uD83C\uDF4E ' + (label || 'Fruitful Moment Transition'),
       '<div style="background:#FFF8F0;border-left:4px solid #F4A261;border-radius:0 8px 8px 0;padding:16px 18px;font-size:15px;line-height:1.7;color:#3D2B1F;">' +
       activity + '</div>');
   }
