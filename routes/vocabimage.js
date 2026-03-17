@@ -1,21 +1,25 @@
 /**
  * /api/vocab-image/:word
  *
- * Returns a Pollinations.ai AI-generated photorealistic image URL for any vocabulary word.
- * Claude (haiku) writes a precise image prompt; Pollinations renders it free with no API key.
- * The browser loads the imageUrl directly as <img src> — server only returns the URL string.
- * Results cached in-process so each word is only prompted once per server start.
+ * Returns an AI-generated photorealistic image, proxied through the server.
+ * The browser fetches /api/vocab-image/tree and gets back a real JPEG —
+ * no cross-origin issues, no browser blocking.
+ *
+ * Flow:
+ *   1. Look up hand-crafted prompt for the word (or ask Claude for unknown words)
+ *   2. Fetch the image from Pollinations.ai on the server side
+ *   3. Stream the JPEG bytes back to the browser as image/jpeg
+ *   4. Cache the rendered image buffer in memory so each word is only generated once
  */
 
 const express = require('express');
 const router  = express.Router();
 const fetch   = require('node-fetch');
 
-// ── IN-MEMORY CACHE  word → prompt string ─────────────────────────────────
-const promptCache = new Map();
+// ── IN-MEMORY IMAGE CACHE  word → Buffer ──────────────────────────────────
+const imageCache = new Map();
 
 // ── HAND-CRAFTED PROMPTS — all 25 Trees exploration words ─────────────────
-// Written once; Claude only called for new words in future explorations.
 const KNOWN_PROMPTS = {
   tree:      'A majestic full oak tree standing alone in an open green field, bright natural daylight, lush green canopy, thick brown trunk visible, photorealistic nature photograph',
   roots:     'Large exposed gnarled tree roots spreading across the surface of a forest floor, earthy brown tones, natural soft light filtering through trees, close-up photorealistic nature photo',
@@ -43,36 +47,55 @@ const KNOWN_PROMPTS = {
   connected: 'Wide view of a dense forest where tree roots visibly interweave at the surface, interconnected woodland floor, photorealistic nature photograph',
 };
 
-// ── ASK CLAUDE FOR AN ACCURATE PROMPT (for unknown words) ─────────────────
+// ── ASK CLAUDE FOR A PROMPT (unknown words in future explorations) ─────────
 async function generatePromptWithClaude(word, exploration) {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'anthropic-version': '2023-06-01',
-      'x-api-key': process.env.ANTHROPIC_API_KEY
-    },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 120,
-      messages: [{
-        role: 'user',
-        content: `Write a short image generation prompt for a PHOTOREALISTIC photograph of: "${word}"
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'anthropic-version': '2023-06-01',
+        'x-api-key': process.env.ANTHROPIC_API_KEY
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 120,
+        messages: [{
+          role: 'user',
+          content: `Write a short image generation prompt for a PHOTOREALISTIC photograph of: "${word}"
 Context: vocabulary word for early childhood curriculum about "${exploration || 'nature'}".
-Rules: real photograph (not cartoon, not illustration), "${word}" is the clear main subject, natural lighting, child-appropriate. End with: photorealistic nature photograph
-Reply with ONLY the prompt, max 35 words.`
-      }]
-    })
-  });
-  const data = await res.json();
-  return ((data.content || [])[0] || {}).text || '';
+Rules: real photograph only (not cartoon, not illustration), "${word}" must be the clear main subject, natural lighting, child-appropriate. End with: photorealistic nature photograph
+Reply with ONLY the prompt text, max 35 words.`
+        }]
+      })
+    });
+    const data = await res.json();
+    return (((data.content || [])[0] || {}).text || '').trim();
+  } catch (e) {
+    return '';
+  }
 }
 
-// ── BUILD POLLINATIONS URL ─────────────────────────────────────────────────
-function pollinationsUrl(prompt, w, h) {
-  return 'https://image.pollinations.ai/prompt/' +
+// ── FETCH IMAGE FROM POLLINATIONS (server-side) ───────────────────────────
+async function fetchPollinationsImage(prompt, w, h) {
+  const url = 'https://image.pollinations.ai/prompt/' +
     encodeURIComponent(prompt) +
     '?width=' + w + '&height=' + h + '&model=flux&nologo=true&seed=42';
+
+  const res = await fetch(url, {
+    timeout: 30000,  // 30 second timeout — Pollinations generates on first request
+    headers: { 'Accept': 'image/jpeg,image/*' }
+  });
+
+  if (!res.ok) throw new Error('Pollinations returned ' + res.status);
+
+  const contentType = res.headers.get('content-type') || '';
+  if (!contentType.includes('image')) throw new Error('Not an image: ' + contentType);
+
+  const buffer = await res.buffer();
+  if (!buffer || buffer.length < 1000) throw new Error('Image too small — likely an error page');
+
+  return { buffer, contentType };
 }
 
 // ── ROUTE: GET /api/vocab-image/:word ─────────────────────────────────────
@@ -81,28 +104,36 @@ router.get('/:word', async (req, res) => {
   const exploration = (req.query.exploration || 'trees').toLowerCase();
   const w = parseInt(req.query.w) || 680;
   const h = parseInt(req.query.h) || 300;
+  const cacheKey = word + '_' + w + 'x' + h;
 
-  // 1. From cache
-  if (promptCache.has(word)) {
-    const prompt = promptCache.get(word);
-    return res.json({ word, prompt, imageUrl: pollinationsUrl(prompt, w, h) });
+  // 1. Serve from cache if available
+  if (imageCache.has(cacheKey)) {
+    const cached = imageCache.get(cacheKey);
+    res.set('Content-Type', cached.contentType);
+    res.set('Cache-Control', 'public, max-age=86400');
+    return res.send(cached.buffer);
   }
 
-  // 2. Known hand-crafted prompt
-  let prompt = KNOWN_PROMPTS[word] || null;
-
-  // 3. Claude fallback for unknown words
+  // 2. Get prompt
+  let prompt = KNOWN_PROMPTS[word];
   if (!prompt) {
-    try { prompt = await generatePromptWithClaude(word, exploration); } catch(e) {}
+    prompt = await generatePromptWithClaude(word, exploration);
   }
-
-  // 4. Last-resort fallback
   if (!prompt || prompt.length < 10) {
-    prompt = 'Close-up photograph of ' + word + ', natural daylight, clear subject, photorealistic nature photograph';
+    prompt = 'Close-up photograph of ' + word + ', natural daylight, photorealistic nature photograph';
   }
 
-  promptCache.set(word, prompt);
-  res.json({ word, prompt, imageUrl: pollinationsUrl(prompt, w, h) });
+  // 3. Fetch image from Pollinations
+  try {
+    const { buffer, contentType } = await fetchPollinationsImage(prompt, w, h);
+    imageCache.set(cacheKey, { buffer, contentType });
+    res.set('Content-Type', contentType);
+    res.set('Cache-Control', 'public, max-age=86400');
+    res.send(buffer);
+  } catch (err) {
+    console.error('Vocab image generation failed for "' + word + '":', err.message);
+    res.status(503).json({ error: 'Image generation failed', word, prompt });
+  }
 });
 
 module.exports = router;
